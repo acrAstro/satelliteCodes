@@ -31,7 +31,7 @@ end
 
 end
 
-function [ phi_J2, cond_c ] = MeanElemsSTM(J2,t,ICSc,Re,mu,tol)
+function [phi_J2,cond_c] = MeanElemsSTM(J2,t,ICSc,Re,mu,tol)
 
 % Calculation of the state transition matrix 
 % for the mean non-singular variables
@@ -71,7 +71,7 @@ q10      = ICSc(4);
 q20      = ICSc(5);
 RAAN0    = ICSc(6);
 %
-Hamiltonian_0 = -mu/(2*a0);
+% Hamiltonian_0 = -mu/(2*a0);
 n0 = sqrt(mu/a0^3);
 p0 = a0*(1 - q10^2 - q20^2);
 R0 = p0/(1 + q10*cos(argLat0) + q20*sin(argLat0));
@@ -79,11 +79,11 @@ Vr0 = sqrt(mu/p0)*(q10*sin(argLat0) - q20*cos(argLat0));
 Vt0 = sqrt(mu/p0)*(1 + q10*cos(argLat0) + q20*sin(argLat0));
 eta0 = sqrt(1 - q10^2 - q20^2);
 %
-[lambda0] = theta2lambda(a0, argLat0, q10, q20);
+[lambda0] = theta2lam(a0, argLat0, q10, q20);
 
 % Secular Variations by J2
 aDot = 0;
-eccDot = 0;
+% eccDot = 0;
 incDot = 0;
 argPerDot = gamma*(1/4)*(n0/p0^2)*(5*cos(i0)^2-1);
 %
@@ -91,8 +91,8 @@ sDot = sin(argPerDot*(t-t0));
 cDot = cos(argPerDot*(t-t0));
 %
 lamDot = n0 + gamma*(1/4)*(n0/p0^2)*((5+3*eta0)*cos(i0)^2 - (1+eta0));
-q1Dot = -argPerDot*(q10*sDot + q20*cDot);
-q2Dot =  argPerDot*(q10*cDot - q20*sDot);
+% q1Dot = -argPerDot*(q10*sDot + q20*cDot);
+% q2Dot =  argPerDot*(q10*cDot - q20*sDot);
 RAANDot = -gamma*(1/2)*(n0/p0^2)*(cos(i0));
 
 % Perturbed orbital elements
@@ -104,9 +104,9 @@ q2=q10*sin(argPerDot*(t-t0))+q20*cos(argPerDot*(t-t0));
 
 lambda = lambda0 + lamDot*(t-t0);
 %
-[theta, FA] = lambda2theta(lambda, q1, q2, tol);
+[theta, ~] = lam2theta(lambda, q1, q2, tol);
 %
-Hamiltonian = -mu/(2*a);
+% Hamiltonian = -mu/(2*a);
 n = sqrt(mu/a^3);
 p = a*(1 - q1^2 - q2^2);
 R = p/(1 + q1*cos(theta) + q2*sin(theta));
@@ -205,13 +205,13 @@ argLat  = elems(2);
 inc     = elems(3);
 q1      = elems(4);
 q2      = elems(5);
-RAAN   = elems(6);
+% RAAN   = elems(6);
 
 % Evaluations from the inputs
-Hamiltonian = -mu/(2*a);
-n = sqrt(mu/a^3);
+% Hamiltonian = -mu/(2*a);
+% n = sqrt(mu/a^3);
 p = a*(1 - q1^2 - q2^2);
-h = sqrt(mu*p);
+% h = sqrt(mu*p);
 R = p/(1 + q1*cos(argLat) + q2*sin(argLat));
 Vr = sqrt(mu/p)*(q1*sin(argLat) - q2*cos(argLat));
 Vt = sqrt(mu/p)*(1 + q1*cos(argLat) + q2*sin(argLat));
@@ -352,7 +352,7 @@ q2      = elems(5);
 RAAN    = elems(6);
 %
 Hamiltonian = -mu/(2*a);
-n = sqrt(mu/a^3);
+% n = sqrt(mu/a^3);
 p = a*(1 - q1^2 - q2^2);
 R = p/(1 + q1*cos(argLat) + q2*sin(argLat));
 Vr = sqrt(mu/p)*(q1*sin(argLat) - q2*cos(argLat));
@@ -595,8 +595,8 @@ c4th    = cos(4*argLat);
 s5th    = sin(5*argLat);
 c5th    = cos(5*argLat);
 %
-Hamiltonian = -mu/(2*a);
-n   = sqrt(mu/a^3);
+% Hamiltonian = -mu/(2*a);
+% n   = sqrt(mu/a^3);
 p   = a*(1 - (q1^2+q2^2));
 R   = p/(1 + q1*cth + q2*sth);
 Vr  = sqrt(mu/p)*(q1*sth - q2*cth);
@@ -607,19 +607,8 @@ eta     = sqrt(1 - (q1^2+q2^2));
 eps1    = sqrt(q1^2 + q2^2);
 eps2    = q1*cth + q2*sth;
 eps3    = q1*sth - q2*cth;
-% Equation of Center
-%the_lam = 2.*(q1.*sin(theta)-q2.*cos(theta))+(3/2).*q1.*q2.*cos(2.*theta)-(3/2).*(q1.^2-q2.^2).*sin(theta).*cos(theta);  
-% differ in 1e-7 with e=0.005
-%lam_q1 = -2*s_th + (3/2)*(q1*s_2th - q2*c_2th);                                 % differ in 1e-3 with e=0.005
-%lam_q2 = 2*c_th - (3/2)*(q1*c_2th + q2*s_2th);                                  % differ in 1e-5 with e=0.005
-[lambda] = theta2lambda(a, argLat, q1, q2);
+[lambda] = theta2lam(a, argLat, q1, q2);
 argLatLam = argLat - lambda;
-%lam_q1 = q2 -(1/(1+eps2))*(2*q2+(2-eta)*s_th) +(2*q1/((1+eta)*(1+eps2)))*(q1*s_th-q2*c_th) -(eta*s_th/((1+eps2)^2)) ...
-%   +(1/(2*(1+eta)*(1+eps2)^2))*(eta*(1+2*eta-eta^2+2*q1*q2*s_2th)*q2+(q1^2-q2^2)*q2*c_2th);
-%lam_q2 = q1 +(c_th/(eta*(1+eps2)))*(eta^2-2*(1-eta)*(1-q1^2)) ...
-%   -(2*q2/(eta*(1+eta)*(1+eps2)))*(eta^2*(q1*s_th-q2*c_th)-q1^2*q2*c_th) +(eta*c_th/((1+eps2)^2)) ...
-%   +(1/(2*(1+eta)*(1+eps2)^2))*(eta*((1+2*eta-eta^2)+(q1^2-3*q2^2)*c_2th-2*q2^2)*q1 ...
-%   +2*(q1^2-q2^2)*q2*s_2th+4*q1*q2^2*c_th^2) +(q1^2*q2^2/((1+eta)^2*(1+eps2)^2))*(q1*c_4th-q2*s_2th);
 lam_q1 = (q1*Vr)/(eta*Vt) + q2/(eta*(1+eta)) - eta*R*(a+R)*(q2+sin(argLat))/(p^2);
 lam_q2 = (q2*Vr)/(eta*Vt) - q1/(eta*(1+eta)) + eta*R*(a+R)*(q1+cos(argLat))/(p^2);
 
@@ -892,10 +881,10 @@ D_sp2 = [ DSP211  DSP212  DSP213  DSP214  DSP215  DSP216;
           DSP261  DSP262  DSP263  DSP264  DSP265  DSP266 ];
 
 %
-var_lsp = gamma*[ aLp aSp1 aSp2; argLatLp argLatSp1 argLatSp2; incLp IncSp1 incSp2;
-                   q1Lp q1Sp1 q1Sp2; q2Lp q2Sp1 q2Sp2; RAANLp RAANSp1 RAANSp2 ];
+% var_lsp = gamma*[ aLp aSp1 aSp2; argLatLp argLatSp1 argLatSp2; incLp IncSp1 incSp2;
+%                    q1Lp q1Sp1 q1Sp2; q2Lp q2Sp1 q2Sp2; RAANLp RAANSp1 RAANSp2 ];
 % Evaluating Osculaing Elements
-lamOsc = lambda + gamma*(lamLp + lamSp1 + lamSp2);
+% lamOsc = lambda + gamma*(lamLp + lamSp1 + lamSp2);
 %
 aOsc       = a + gamma*(aLp + aSp1 + aSp2);
 argLatOsc  = argLat + gamma*(argLatLp + argLatSp1 + argLatSp2);
@@ -911,7 +900,7 @@ DJ2 = eye(6) + gamma*(DLP + D_sp1 + D_sp2);
 osc_c = [ aOsc;  argLatOsc;  iOsc;  q1Osc;  q2Osc;  OmegaOsc ];
 end
 
-function [ lambda ] = theta2lambda(a, theta, q1, q2);
+function [lambda] = theta2lam(a, theta, q1, q2)
 
 % Calculation of mean longitude lambda = M + w 
 % from true longitude theta = f + w
@@ -934,7 +923,7 @@ den = R*(1+beta*q2^2)*cos(theta) - beta*R*q1*q2*sin(theta) + a*q1;
 
 F = atan2( num, den );
 lambda = F - q1*sin(F) + q2*cos(F);
-%lambda = F - eta*(q1*sin(theta)-q2*cos(theta))/(1+q1*cos(theta)+q2*sin(theta));
+
 while (lambda < 0)
   lambda = lambda + (2*pi);
 end;
@@ -955,9 +944,7 @@ if (theta < 0)
       quad_plus = -1;
    end;
    lambda = lambda - (kk_plus+quad_plus)*(2*pi);
-%   if (lambda > 0)
-%      [theta*(180/pi) lambda*(180/pi) kk_plus quad_plus]
-%   end;
+
 else
    kk_minus = 0;
    quad_minus = 0;
@@ -965,13 +952,12 @@ else
      kk_minus = kk_minus + 1;
      theta = theta - (2*pi);
    end;
-   if (theta < (pi/2)) & (lambda > (pi))
+   if (theta < (pi/2)) && (lambda > (pi))
       quad_minus = -1;
-   elseif (lambda < (pi/2)) & (theta > (pi))
+   elseif (lambda < (pi/2)) && (theta > (pi))
       quad_minus = 1;
    end;
    lambda = lambda + (kk_minus+quad_minus)*(2*pi);
 end;
-%lambda = lambda - (kk_plus+quad_plus)*(2*pi) + (kk_minus+quad_minus)*(2*pi);
 
 end
