@@ -225,7 +225,7 @@ A15 = -(2*a*R*q2/p) - (R^2/p)*sin(argLat);
 A16 = 0;
 
 A21 = -(1/2)*Vr/a;
-A22 = sqrt(mu/p)*((p/R) -1);
+A22 = sqrt(mu/p)*((p/R)-1);
 A23 = 0;
 A24 = (Vr*a*q1/p) + sqrt(mu/p)*sin(argLat);
 A25 = (Vr*a*q2/p) - sqrt(mu/p)*cos(argLat);
@@ -988,12 +988,6 @@ while abs(FF) > Tol
   del_F = -FF / dFFdF;
   F = F + del_F;
 end;
-%while (F < 0)
-%  F = F + (2*pi);
-%end;
-%while (F >= (2*pi))
-%  F = F - (2*pi);
-%end;
 
 % True Longitude
 num = (1+eta)*(eta*sin(F)-q2) + q2*(q1*cos(F)+q2*sin(F));
@@ -1014,9 +1008,9 @@ if (lambda < 0)
      kk_plus = kk_plus + 1;
      lambda = lambda + (2*pi);
    end;
-   if (lambda < (pi/2)) & (theta > (pi))
+   if (lambda < (pi/2)) && (theta > (pi))
       quad_plus = 1;
-   elseif (theta < (pi/2)) & (lambda > (pi))
+   elseif (theta < (pi/2)) && (lambda > (pi))
       quad_plus = -1;
    end;
    theta = theta - (kk_plus+quad_plus)*(2*pi);
@@ -1027,9 +1021,9 @@ else
      kk_minus = kk_minus + 1;
      lambda = lambda - (2*pi);
    end;
-   if (lambda < (pi/2)) & (theta > (pi))
+   if (lambda < (pi/2)) && (theta > (pi))
       quad_minus = -1;
-   elseif (theta < (pi/2)) & (lambda > (pi))
+   elseif (theta < (pi/2)) && (lambda > (pi))
       quad_minus = 1;
    end;
    theta = theta + (kk_minus+quad_minus)*(2*pi);
