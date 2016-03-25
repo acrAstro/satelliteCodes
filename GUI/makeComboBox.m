@@ -1,7 +1,21 @@
-function makeComboBox(parent,name,width,height,callback)
+function ui = makeComboBox(parent,value,left,top,callback,width,height)
 
-pHeight = parent.Position(4);
-pWidth = parent.Position(3);
+if nargin < 5
+    callback = @nothing;
+end
 
-uicontrol('parent',parent,'String',name,'HorizontalAlignment','left','width',width,'height',height,'callback',callback);
+if nargin < 6
+    width = 150;
+end
+
+if nargin < 7
+    height = 20;
+end
+
+parentHeight = getHeight(parent);
+
+ui = uicontrol('parent',parent,'style','popupmenu','string',value,'Position',[left,parentHeight-height-top,width,height],'backgroundcolor',[0.74,0.74,0.74],'fontweight','bold','callback',callback);
+end
+
+function nothing(~,~)
 end
