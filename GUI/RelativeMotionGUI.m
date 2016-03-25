@@ -1,11 +1,17 @@
 function RelativeMotionGUI
 
-clear all; close all; clc;
+clear; close all; clc;
 
-f = figure('units','normalized','outerposition',[0 0 1 1],'name','Relative Motion');
-fHeight = f.Position(4);
-fWidth  = f.Position(3);
+guiHeight = 500;
+guiWidth = 1000;
+leftBuffer = 50;
+topBuffer = 200;
+screenSize = get(groot,'Screensize');
+screenHeight = screenSize(4);
+f = figure('Visible','off','position',[leftBuffer,screenHeight-guiHeight-topBuffer,guiWidth,guiHeight]);
 
 
+
+f.Visible = 'on';
 
 end
