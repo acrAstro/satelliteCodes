@@ -59,9 +59,22 @@ end
 constraints = [constraints, X(:,Nsim+1) == Xf];
 options = sdpsettings('solver','gurobi','saveyalmipmodel',1,'verbose',3);
 
-inputParams = {X0,Xf};
+inputParams = {x1,x2};
 outputSolutions = {u,objective};
 
 controller = optimizer(constraints,objective,options,inputParams,outputSolutions);
 
-[solutions,~] = controller({X0,Xf});
+[solutions,~] = controller{{X0,Xf}};
+
+u = solutions{1};
+x = zeros(6,Nsim);
+x(:,1) = x0;
+for ii = 1:length(Nsim)
+    x(:,ii+1) = A*x(:,ii) + B*u(:,ii);
+end
+
+figure
+hold on
+grid on
+plot3(x(1,:),x(2,:),x(3,:),'k','linewidth',2)
+axis tight
