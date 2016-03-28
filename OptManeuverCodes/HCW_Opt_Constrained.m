@@ -64,3 +64,17 @@ outputSolutions = {u,objective};
 controller = optimizer(constraints,objective,options,inputParams,outputSolutions);
 
 [solutions,~] = controller{{X0,Xf}};
+
+u = solutions{1};
+x = zeros(6,Nsim);
+x(:,1) = x0;
+for ii = 1:length(Nsim)
+    x(:,ii+1) = A*x(:,ii) + B*u(:,ii);
+end
+
+figure
+hold on
+grid on
+plot3(x(1,:),x(2,:),x(3,:),'k','linewidth',2)
+axis tight
+>>>>>>> 10c83e06ae7060003c4ff6a6416960a8e31784ee

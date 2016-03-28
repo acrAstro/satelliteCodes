@@ -53,16 +53,16 @@ t = linspace(t0,tf,N*numPeriod);
 % Here you can specify whether you want initial orbital element differences
 % or XYZ differences
 
-% Cartesian
-eccFactor = -n*(2+ecc)/(sqrt((1+ecc)*(1-ecc)^3));
-x0 = 4000;
-y0 = 4000;
-z0 = 10000;
-xd0 = 0;
-yd0 = eccFactor*x0;
-zd0 = 0;
-X0GA = [x0; xd0; y0; yd0; z0; zd0];
-X0 = [x0; y0; z0; xd0; yd0; zd0];
+// % Cartesian
+// eccFactor = -n*(2+ecc)/(sqrt((1+ecc)*(1-ecc)^3));
+// x0 = 4000;
+// y0 = 4000;
+// z0 = 10000;
+// xd0 = 0;
+// yd0 = eccFactor*x0;
+// zd0 = 0;
+// X0GA = [x0; xd0; y0; yd0; z0; zd0];
+// X0 = [x0; y0; z0; xd0; yd0; zd0];
 
 % Elements- COEs
 % da = 103.624;
@@ -71,12 +71,13 @@ X0 = [x0; y0; z0; xd0; yd0; zd0];
 % dO = 0.2*pi/180;
 % dw = 0;
 % dM = 0.01*pi/180;
-% 
+%
 % DepElemsInit = kepElemsInit + [da; de; di; dO; dw; dM];
 % DepElemsInitNS =  COE_to_Nonsingular(DepElemsInit,tol);
 % [DJ2Dep,DepOsc] = MeanToOsculatingElements(J2,DepElemsInitNS,Req,mu);
 % deltaElems = DepOsc - ChiefOsc;
-% X0 = SigmaMatrix(J2,ChiefOsc,Req,mu)*deltaElems;
+% X0GA = SigmaMatrix(J2,ChiefOsc,Req,mu)*deltaElems;
+X0 = [x0; y0; z0; xd0; yd0; zd0];
 % x0 = X0(1); y0 = X0(3); z0 = X0(5);
 
 % Elements- Nonsingular
