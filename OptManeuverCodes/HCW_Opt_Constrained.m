@@ -48,7 +48,6 @@ x2 = sdpvar(nx,1);
 constraints = [];
 objective = 0;
 constraints = [constraints, X(:,1) == X0];
-
 for ii = 1:Nsim
     objective = objective + sum(uSlack(1:nu,ii));
     constraints = [constraints, X(:,ii+1) == A*X(:,ii) + B*u(:,ii)];
@@ -59,9 +58,9 @@ end
 constraints = [constraints, X(:,Nsim+1) == Xf];
 options = sdpsettings('solver','gurobi','saveyalmipmodel',1,'verbose',3);
 
-inputParams = {X0,Xf};
+inputParams = {x1,x2};
 outputSolutions = {u,objective};
 
 controller = optimizer(constraints,objective,options,inputParams,outputSolutions);
 
-[solutions,~] = controller({X0,Xf});
+[solutions,~] = controller{{X0,Xf}};
