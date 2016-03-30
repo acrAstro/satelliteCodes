@@ -1,7 +1,8 @@
-clear all; close all; clc;
+clear; close all; clc; asv;
 
 mu = 3.986e6;
 J2 = 1082.63e-6;
+Req = 6378.137;
 
 a = 6678;
 ecc = 0.01;
@@ -19,7 +20,8 @@ tf = numPeriod*period;
 
 t = linspace(t0,tf,100*numPeriod);
 
-orbit = TwoBodyOrbit(kepElems,J2,t,mu);
-orbit.setInitialConditions()
-% orbit.propagateOrbit();
-orbit.initialConditions
+orbit = TwoBodyOrbit(kepElems,J2,mu,Req,t0,numPeriod);
+orbit.setInitialConditions();
+orbit.propagateOrbit();
+orbit.plotOrbit();
+

@@ -1,18 +1,18 @@
-function [T,X] = orbitEquation(t,x,mu,J2)
+function DX = orbitEquation(t,x,mu,J2,Req)
 
 r = x(1:3,1);
 v = x(4:6,1);
 R = norm(r);
 
-aj2 = J2Vector(mu,r,J2);
+aj2 = J2Vector(mu,r,J2,Req);
 
 rdot = v;
 vdot = -mu/R^3.*r + aj2;
-X = [rdot(:); vdot(:)];
+DX = [rdot(:); vdot(:)];
 end
 
-function aj2 = J2Vector(mu,r,J2)
-req = 6378.137;
+function aj2 = J2Vector(mu,r,J2,req)
+
 x = r(1); y = r(2); z = r(3);
 R = norm(r);
 gamma = -3/2*J2*(mu/R^2)*(req/R)^2;
