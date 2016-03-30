@@ -2,6 +2,7 @@ function RelativeMotionGUI
 
 clear; close all; clc;
 addpath([pwd,filesep,'Auxiliary Functions']);
+addpath([pwd,filesep,'OrbitFunctions']);
 global Req;
 Req = 6378;
 global mu;
