@@ -27,16 +27,16 @@ classdef TwoBodyOrbit < handle
     
     %% Functionality of class
     methods
-        function TBP = TwoBodyOrbit(kepElems,J2,mu,Req,t0,numPeriod,safetyAltitude,parameterization)
+        function TBP = TwoBodyOrbit(initStruct)
             % Constructor object
-            TBP.initialKeplerElems = kepElems;
-            TBP.J2 = J2;
-            TBP.mu = mu;
-            TBP.safetyAltitude = safetyAltitude;
-            TBP.Req = Req;
-            TBP.t0 = t0;
-            TBP.numPeriod = numPeriod;
-            TBP.parameterization = parameterization;
+            TBP.initialKeplerElems = initStruct.kepElems;
+            TBP.J2 = initStruct.params{1};
+            TBP.mu = initStruct.params{2};
+            TBP.Req = initStruct.params{3};
+            TBP.t0 = initStruct.params{4};
+            TBP.numPeriod = initStruct.params{5};
+            TBP.safetyAltitude = initStruct.params{6};
+            TBP.parameterization = initStruct.Parameterization;
         end
         
         function TBP = checkParameterization(TBP)
@@ -67,13 +67,13 @@ classdef TwoBodyOrbit < handle
             method = TBP.parameterization;
             switch method
                 case 'RV'
-                    options = odeset('RelTol',1e-9,'AbsTol',1e-12); % ode45 options
+                    options = odeset('RelTol',1e-12,'AbsTol',1e-15); % ode45 options
                     [~,X] = ode45(@orbitEquation,TBP.time,TBP.initialConditions,...
                         options,TBP.mu,TBP.J2,TBP.Req); % Integrates equations
                     TBP.RVStates = X;
                     TBP.getKepElems(); % Derives Kepler elements from R and V
                 case 'OE'
-                    options = odeset('RelTol',1e-9,'AbsTol',1e-12); % ode45 options
+                    options = odeset('RelTol',1e-12,'AbsTol',1e-15); % ode45 options
                     [~,X] = ode45(@GaussVariationalEquations,TBP.time,TBP.initialConditions,options,TBP.mu,TBP.Req,TBP.J2);
                     TBP.OsculatingElements = X;
                     TBP.getRV();
@@ -104,7 +104,7 @@ classdef TwoBodyOrbit < handle
         end
         
         function TBP = getRV(TBP)
-            %             states = zeros(6,length(TBP.time));
+            states = zeros(6,length(TBP.time));
             for ii = 1:length(TBP.time)
                 states(:,ii) = oe2rv(TBP.OsculatingElements(ii,:),TBP.mu,'r');
             end
@@ -131,12 +131,83 @@ classdef TwoBodyOrbit < handle
             set([title1,xl,yl,zl,leg1],'interpreter','latex','fontsize',12);
         end
         
+        function TBP = plotOrbitalElements(TBP)
+            SMA      = TBP.OsculatingElements(:,1);
+            Ecc      = TBP.OsculatingElements(:,2);
+            Inc      = TBP.OsculatingElements(:,3);
+            Raan     = TBP.OsculatingElements(:,4);
+            argPer   = TBP.OsculatingElements(:,5);
+            F        = TBP.OsculatingElements(:,6);
+            Time     = 1/TBP.period.*TBP.time;
+            
+            figure
+            hold on
+            grid on
+            plot(Time, SMA,'k','LineWidth',2)
+            axis tight
+            title1 = title('Semi-major Axis vs Time');
+            xl = xlabel('Time, $n$-orbits');
+            yl = ylabel('Semi-major Axis, $a$, km');
+            set([title1,xl,yl],'interpreter','latex','fontsize',10);
+            
+            figure
+            hold on
+            grid on
+            plot(Time, Ecc,'k','LineWidth',2)
+            axis tight
+            title1 = title('Eccentricity vs Time');
+            xl = xlabel('Time, $n$-orbits');
+            yl = ylabel('Eccentricity, $e$');
+            set([title1,xl,yl],'interpreter','latex','fontsize',10);
+            
+            figure
+            hold on
+            grid on
+            plot(Time, 180/pi.*Inc,'k','LineWidth',2)
+            axis tight
+            title1 = title('Inclination vs Time');
+            xl = xlabel('Time, $n$-orbits');
+            yl = ylabel('Inclination, $i$, $\deg$');
+            set([title1,xl,yl],'interpreter','latex','fontsize',10);
+            
+            figure
+            hold on
+            grid on
+            plot(Time, 180/pi.*Raan,'k','LineWidth',2)
+            axis tight
+            title1 = title('Right-Ascension vs Time');
+            xl = xlabel('Time, $n$-orbits');
+            yl = ylabel('Right-Ascension, $\Omega$, $\deg$');
+            set([title1,xl,yl],'interpreter','latex','fontsize',10);
+            
+            figure
+            hold on
+            grid on
+            plot(Time, 180/pi.*argPer,'k','LineWidth',2)
+            axis tight
+            title1 = title('Argument of Perigee vs Time');
+            xl = xlabel('Time, $n$-orbits');
+            yl = ylabel('Argument of Perigee, $\omega$, $\deg$');
+            set([title1,xl,yl],'interpreter','latex','fontsize',10);
+            
+            %            figure
+            %            hold on
+            %            grid on
+            %            plot(Time, 180/pi.*F,'k','LineWidth',2)
+            %            axis tight
+            %            title1 = title('True Anomaly vs Time');
+            %            xl = xlabel('Time, $n$-orbits');
+            %            yl = ylabel('True Anomaly, $f$, $\deg$');
+            %            set([title1,xl,yl],'interpreter','latex','fontsize',10);
+            
+        end
+        
         function isInsideEarth(TBP)
             if TBP.Req/1e3 < 10
                 % Radius at periapsis
                 rp = TBP.initialKeplerElems(1)*(1 - TBP.initialKeplerElems(2));
                 periapsisAltitude = rp - TBP.Req;
-                fprintf(['Periapsis altitude = ' num2str(periapsisAltitude) '\n']);
+                %                 fprintf(['Periapsis altitude = ' num2str(periapsisAltitude) '\n']);
                 
                 safeAltRatio = (TBP.safetyAltitude + TBP.Req)/TBP.Req;
                 rpRatio = (rp)/TBP.Req;
@@ -213,8 +284,8 @@ th = w+f;
 % satellite, so convert the orbital elements into the R and V vectors using
 % oe2rv subroutine.
 els = [a ecc inc W w f];
-[R,V] = oe2rv(els,mu,'r');
-
+State = oe2rv(els,mu,'r');
+R = State(1:3); V = State(4:6);
 Rot = ijk_to_LVLH([R V]);
 % Return J2 acceleration
 aj2 = Rot*J2Vector(mu,R,J2,Req);
@@ -324,7 +395,7 @@ else
 end
 end
 
-function [r,v] = oe2rv(elements,mu,flag)
+function states = oe2rv(elements,mu,flag)
 % This function converts the Keplerian elements to the Cartesian state
 % vector. From Fundamentals of Astrodynamics with Applications,...
 % David Vallado, 2007., pp.126-127, Algorithm 10.
