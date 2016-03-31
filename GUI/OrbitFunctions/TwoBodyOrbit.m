@@ -29,6 +29,12 @@ classdef TwoBodyOrbit < handle
     methods
         function TBP = TwoBodyOrbit(initStruct)
             % Constructor object
+            % initStruct has the following fields:
+            % kepElems: 6x1 vector of initial orbital elements
+            % params:   6x1 cell array, J2, mu, Req, t0,
+            %           numPeriod,safetyAltitude
+            % parameterization: RV or OE parameterization of the orbit
+            %
             TBP.initialKeplerElems = initStruct.kepElems;
             TBP.J2 = initStruct.params{1};
             TBP.mu = initStruct.params{2};
@@ -65,17 +71,16 @@ classdef TwoBodyOrbit < handle
             TBP.makeTimeVector(); % Instantiates the time vector
             % Take constructor and propagate orbit
             method = TBP.parameterization;
+            options = odeset('RelTol',1e-12,'AbsTol',1e-15); % ode45 options
             switch method
                 case 'RV'
-                    options = odeset('RelTol',1e-12,'AbsTol',1e-15); % ode45 options
                     [~,X] = ode45(@orbitEquation,TBP.time,TBP.initialConditions,...
                         options,TBP.mu,TBP.J2,TBP.Req); % Integrates equations
-                    TBP.RVStates = X;
+                    TBP.RVStates = X';
                     TBP.getKepElems(); % Derives Kepler elements from R and V
                 case 'OE'
-                    options = odeset('RelTol',1e-12,'AbsTol',1e-15); % ode45 options
                     [~,X] = ode45(@GaussVariationalEquations,TBP.time,TBP.initialConditions,options,TBP.mu,TBP.Req,TBP.J2);
-                    TBP.OsculatingElements = X;
+                    TBP.OsculatingElements = X';
                     TBP.getRV();
             end
         end
@@ -85,8 +90,8 @@ classdef TwoBodyOrbit < handle
             switch method
                 case 'RV'
                     % Takes Kepler elements and returns R and V for ode45
-                    [R,V] = oe2rv(TBP.initialKeplerElems,TBP.mu,'r');
-                    TBP.initialConditions = [R(:); V(:)];
+                    RV = oe2rv(TBP.initialKeplerElems,TBP.mu,'r');
+                    TBP.initialConditions = RV(:);
                     TBP.isInsideEarth();
                 case 'OE'
                     TBP.initialConditions = TBP.initialKeplerElems;
@@ -98,7 +103,7 @@ classdef TwoBodyOrbit < handle
             % Take R and V and return Kepler elements over time
             oscElems = zeros(6,length(TBP.time));
             for ii = 1:length(TBP.time)
-                oscElems(:,ii) = rv2oe(TBP.RVStates(ii,:),TBP.mu);
+                oscElems(:,ii) = rv2oe(TBP.RVStates(:,ii),TBP.mu);
             end
             TBP.OsculatingElements = oscElems;
         end
@@ -106,9 +111,9 @@ classdef TwoBodyOrbit < handle
         function TBP = getRV(TBP)
             states = zeros(6,length(TBP.time));
             for ii = 1:length(TBP.time)
-                states(:,ii) = oe2rv(TBP.OsculatingElements(ii,:),TBP.mu,'r');
+                states(:,ii) = oe2rv(TBP.OsculatingElements(:,ii),TBP.mu,'r');
             end
-            TBP.RVStates = states';
+            TBP.RVStates = states;
         end
         
         function TBP = plotOrbit(TBP)
@@ -119,7 +124,7 @@ classdef TwoBodyOrbit < handle
             figure
             hold on
             grid on
-            plot3(TBP.RVStates(:,1),TBP.RVStates(:,2),TBP.RVStates(:,3),'k',...
+            plot3(TBP.RVStates(1,:),TBP.RVStates(2,:),TBP.RVStates(3,:),'k',...
                 'linewidth',2);
             surf(xs,ys,zs);
             title1 = title('$J_2$-Perturbed Orbit');
@@ -132,12 +137,12 @@ classdef TwoBodyOrbit < handle
         end
         
         function TBP = plotOrbitalElements(TBP)
-            SMA      = TBP.OsculatingElements(:,1);
-            Ecc      = TBP.OsculatingElements(:,2);
-            Inc      = TBP.OsculatingElements(:,3);
-            Raan     = TBP.OsculatingElements(:,4);
-            argPer   = TBP.OsculatingElements(:,5);
-            F        = TBP.OsculatingElements(:,6);
+            SMA      = TBP.OsculatingElements(1,:);
+            Ecc      = TBP.OsculatingElements(2,:);
+            Inc      = TBP.OsculatingElements(3,:);
+            Raan     = TBP.OsculatingElements(4,:);
+            argPer   = TBP.OsculatingElements(5,:);
+%             F        = TBP.OsculatingElements(6,:);
             Time     = 1/TBP.period.*TBP.time;
             
             figure
@@ -242,8 +247,8 @@ function DX = orbitEquation(t,x,mu,J2,Req)
 % Date:   29 March 2016
 %
 % State vector
-r = x(1:3,1);
-v = x(4:6,1);
+r = x(1:3);
+v = x(4:6);
 R = norm(r); % Magnitude of R
 
 % Return J2 acceleration
@@ -314,7 +319,7 @@ j2z = (3 - 5*(z/R)^2)*z/R;
 aj2 = gamma.*[j2x; j2y; j2z];
 end
 
-function [KepElems] = rv2oe(ic,mu)
+function [KepElems] = rv2oe(ic,mu,flag)
 % Function imports a 1x6 state vector of ephemeris data and computes the
 % corresponding initial Keplerian state vector for use with Gauss'
 % Equations, follows algorithm 9 (pp 120-121) in Fundamentals of ...
@@ -323,6 +328,12 @@ function [KepElems] = rv2oe(ic,mu)
 % Inputs:   ic         = Cartesian state vector [x,y,z,xd,yd,zd]
 % Outputs:  KepElems   = 1x6 vector of Keplerian Elements
 %
+
+if nargin < 3 || isempty(flag)
+    flag = 'r';
+else
+end
+
 % Inertial unit vectors, IJK
 KK = [0 0 1];
 % Radial and velocity vectors
@@ -342,57 +353,113 @@ if ecc ~= 1.0
 else
     a = inf;
 end
-b = a*sqrt(1-ecc^2);
-% Inclination
-inc = acosd((hvec(3))/h);
-% Right-ascension of the ascending node
-if nvec(2) > 0
-    W = acosd((nvec(1))/n);
-else
-    W = 360 - acosd((nvec(1))/n);
-end
-% Argument of periapsis
-if eccvec(3) > 0
-    w = acosd((dot(nvec,eccvec))/(n*ecc));
-else
-    w = 360 - acosd((dot(nvec,eccvec))/(n*ecc));
-end
-% True anomaly
-if dot(rvec,vvec) > 0
-    f = acosd(dot(eccvec,rvec)/(ecc*r));
-else
-    f = 360 - acosd(dot(eccvec,rvec)/(ecc*r));
+
+method = flag;
+switch method
+    case 'd'
+        % Inclination
+        inc = acosd((hvec(3))/h);
+        % Right-ascension of the ascending node
+        if nvec(2) > 0
+            W = acosd((nvec(1))/n);
+        else
+            W = 360 - acosd((nvec(1))/n);
+        end
+        % Argument of periapsis
+        if eccvec(3) > 0
+            w = acosd((dot(nvec,eccvec))/(n*ecc));
+        else
+            w = 360 - acosd((dot(nvec,eccvec))/(n*ecc));
+        end
+        % True anomaly
+        if dot(rvec,vvec) > 0
+            f = acosd(dot(eccvec,rvec)/(ecc*r));
+        else
+            f = 360 - acosd(dot(eccvec,rvec)/(ecc*r));
+        end
+        
+        % Special cases
+        % Elliptic Equatorial
+        if inc == 0 && ecc ~= 0
+            if eccvec(2) > 0
+                w_true = acosd(eccvec(1)/ecc);
+            else
+                w_true = 360 - acosd(eccvec(1)/ecc);
+            end
+            KepElems = [a,ecc,inc,W,w_true,f]';
+            % Circular Inclined
+        elseif inc ~= 0 && ecc == 0
+            if rvec(3) > 0
+                u_l = acosd(dot(nvec,rvec)/(n*r));
+            else
+                u_l = 360 - acosd(dot(nvec,rvec)/(n*r));
+            end
+            KepElems = [a,ecc,inc,W,w,u_l]';
+            % Circular Equatorial
+        elseif inc == 0 && ecc == 0
+            if rvec(2) > 0
+                lam = acosd(rvec(1)/r);
+            else
+                lam = 360 - acosd(rvec(1)/r);
+            end
+            KepElems = [a,ecc,inc,W,w,lam]';
+            % All other orbits
+        else
+            KepElems = [a,ecc,inc,W,w,f]';
+        end
+    case 'r'
+        % Inclination
+        inc = acos((hvec(3))/h);
+        % Right-ascension of the ascending node
+        if nvec(2) > 0
+            W = acos((nvec(1))/n);
+        else
+            W = 2*pi - acos((nvec(1))/n);
+        end
+        % Argument of periapsis
+        if eccvec(3) > 0
+            w = acos((dot(nvec,eccvec))/(n*ecc));
+        else
+            w = 2*pi - acos((dot(nvec,eccvec))/(n*ecc));
+        end
+        % True anomaly
+        if dot(rvec,vvec) > 0
+            f = acos(dot(eccvec,rvec)/(ecc*r));
+        else
+            f = 2*pi - acos(dot(eccvec,rvec)/(ecc*r));
+        end
+        
+        % Special cases
+        % Elliptic Equatorial
+        if inc == 0 && ecc ~= 0
+            if eccvec(2) > 0
+                w_true = acos(eccvec(1)/ecc);
+            else
+                w_true = 2*pi - acos(eccvec(1)/ecc);
+            end
+            KepElems = [a,ecc,inc,W,w_true,f]';
+            % Circular Inclined
+        elseif inc ~= 0 && ecc == 0
+            if rvec(3) > 0
+                u_l = acos(dot(nvec,rvec)/(n*r));
+            else
+                u_l = 2*pi - acos(dot(nvec,rvec)/(n*r));
+            end
+            KepElems = [a,ecc,inc,W,w,u_l]';
+            % Circular Equatorial
+        elseif inc == 0 && ecc == 0
+            if rvec(2) > 0
+                lam = acos(rvec(1)/r);
+            else
+                lam = 2*pi - acos(rvec(1)/r);
+            end
+            KepElems = [a,ecc,inc,W,w,lam]';
+            % All other orbits
+        else
+            KepElems = [a,ecc,inc,W,w,f]';
+        end
 end
 
-% Special cases
-% Elliptic Equatorial
-if inc == 0 && ecc ~= 0
-    if eccvec(2) > 0
-        w_true = acosd(eccvec(1)/ecc);
-    else
-        w_true = 360 - acosd(eccvec(1)/ecc);
-    end
-    KepElems = [a,ecc,inc,W,w_true,f]';
-    % Circular Inclined
-elseif inc ~= 0 && ecc == 0
-    if rvec(3) > 0
-        u_l = acosd(dot(nvec,rvec)/(n*r));
-    else
-        u_l = 360 - acosd(dot(nvec,rvec)/(n*r));
-    end
-    KepElems = [a,ecc,inc,W,w,u_l]';
-    % Circular Equatorial
-elseif inc == 0 && ecc == 0
-    if rvec(2) > 0
-        lam = acosd(rvec(1)/r);
-    else
-        lam = 360 - acosd(rvec(1)/r);
-    end
-    KepElems = [a,ecc,inc,W,w,lam]';
-    % All other orbits
-else
-    KepElems = [a,ecc,inc,W,w,f]';
-end
 end
 
 function states = oe2rv(elements,mu,flag)
@@ -417,6 +484,10 @@ function states = oe2rv(elements,mu,flag)
 % Set default value of mu to that of Earth if no value is given
 if nargin < 2
     mu = 3.986e5;
+end
+if nargin < 3 || isempty(flag)
+    flag = 'r';
+else
 end
 % Determine if vector of orbit elements is the correct size and return an
 % error if it is not
@@ -457,6 +528,10 @@ end
 
 function R1 = rotation1(theta,flag)
 % This function performs a 1-rotation, takes arguments in radians
+if nargin < 2 || isempty(flag)
+    flag = 'r';
+else
+end
 if strcmp(flag,'d') == 1
     theta = theta*180/pi;
     R1 = [1 0            0         ;
@@ -472,6 +547,10 @@ end
 
 function R3 = rotation3(theta,flag)
 % This function performs a 3-rotation, takes arguments in radians
+if nargin < 2 || isempty(flag)
+    flag = 'r';
+else
+end
 if strcmp(flag,'d') == 1
     theta = theta*180/pi;
     R3 = [cosd(theta) sind(theta) 0;

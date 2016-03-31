@@ -4,19 +4,19 @@ clear; close all; clc; asv;
 % Date:   29 March 2016
 %
 
-parameterization = 'OE';
+parameterization = 'RV';
 
 % Parameters
-mu = 3.986e6;
+mu = 3.986e5;
 J2 = 1082.63e-6;
 Req = 6378.137;
 
 % Initial Kepler elements
 a = 6678;
 ecc = 0.01;
-inc = 63.4*pi/180;
+inc = 68.4*pi/180;
 raan = 45*pi/180;
-argPer = 0*pi/180;
+argPer = 30*pi/180;
 f0 = 0*pi/180;
 kepElems = [a ecc inc raan argPer f0]';
 safetyAltitude = 75;
@@ -24,6 +24,7 @@ safetyAltitude = 75;
 numPeriod = 15;
 t0 = 0;
 
+% Initialization structure for orbit class
 initStruct.kepElems         = kepElems;
 initStruct.params           = {J2,mu,Req,t0,numPeriod,safetyAltitude};
 initStruct.Parameterization = parameterization;
@@ -33,9 +34,9 @@ orbit = TwoBodyOrbit(initStruct);
 % Compute initial conditions
 orbit.setInitialConditions();
 % Propagate orbit
-orbit.propagateOrbit();
+orbit.propagateOrbit()
 % Plot orbit
 orbit.plotOrbit();
-% Plot orbital elements
+% % Plot orbital elements
 orbit.plotOrbitalElements();
 
