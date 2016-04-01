@@ -12,8 +12,8 @@ tol     = 1e-12; % tolerance for transcendental root finding
 % Cartesian variables (not yet though)
 
 % Classical orbital elements
-a = 45000e3;
-ecc = 0.8;
+a = 6678e3;
+ecc = 0.01;
 inc = 45*pi/180;
 raan = pi/4;
 w = pi/6;
@@ -53,16 +53,16 @@ t = linspace(t0,tf,N*numPeriod);
 % Here you can specify whether you want initial orbital element differences
 % or XYZ differences
 
-// % Cartesian
-// eccFactor = -n*(2+ecc)/(sqrt((1+ecc)*(1-ecc)^3));
-// x0 = 4000;
-// y0 = 4000;
-// z0 = 10000;
-// xd0 = 0;
-// yd0 = eccFactor*x0;
-// zd0 = 0;
-// X0GA = [x0; xd0; y0; yd0; z0; zd0];
-// X0 = [x0; y0; z0; xd0; yd0; zd0];
+% Cartesian
+eccFactor = -n*(2+ecc)/(sqrt((1+ecc)*(1-ecc)^3));
+x0 = 4000;
+y0 = 4000;
+z0 = 10000;
+xd0 = 0;
+yd0 = eccFactor*x0;
+zd0 = 0;
+X0GA = [x0; xd0; y0; yd0; z0; zd0];
+X0 = [x0; y0; z0; xd0; yd0; zd0];
 
 % Elements- COEs
 % da = 103.624;
