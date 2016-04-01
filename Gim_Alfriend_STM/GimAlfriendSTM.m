@@ -93,7 +93,23 @@ classdef GimAlfriendSTM < handle
             GA.X(:,ii) = GA.Phi(:,:,ii)*GA.initialConditions;
             end
         end
-        
+         
+        function GA = plotGAOrbit(GA)
+            x = GA.X(1,:);
+            y = GA.X(3,:);
+            z = GA.X(5,:);
+            
+            figure
+            hold on
+            grid on
+            plot3(x,y,z,'k','linewidth',2)
+            axis tight
+            title1 = title('$J_2$-Perturbed Relative Motion');
+            xl = xlabel('Radial, $x$, m');
+            yl = ylabel('In-track, $y$, m');
+            zl = zlabel('Cross-track, $z$, m');
+            set([title1,xl,yl,zl],'interpreter','latex','fontsize',12);
+        end
     end
 end
 

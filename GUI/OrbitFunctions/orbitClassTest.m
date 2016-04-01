@@ -1,4 +1,4 @@
-clear; close all; clc; asv;
+clear; clc; asv;
 % This is a simple test script to debug the TwoBodyOrbit class
 % Author: Andrew Rogers, Ph.D.
 % Date:   29 March 2016
