@@ -34,7 +34,7 @@ orbit = TwoBodyOrbit(initStruct);
 % Compute initial conditions
 orbit.setInitialConditions();
 % Propagate orbit
-orbit.propagateOrbit()
+orbit.propagateOrbit();
 % Plot orbit
 orbit.plotOrbit();
 % % Plot orbital elements

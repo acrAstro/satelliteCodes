@@ -23,6 +23,7 @@ classdef TwoBodyOrbit < handle
         mass                % Spacecraft mass, not used yet
         Req                 % Equatorial radius of Earth
         parameterization    % Parameterization, R and V or Kepler, string
+        R3Plot
     end
     
     %% Functionality of class
@@ -121,7 +122,7 @@ classdef TwoBodyOrbit < handle
             % Earth
             [xs,ys,zs] = sphere(30);
             xs = TBP.Req.*xs; ys = TBP.Req.*ys; zs = TBP.Req.*zs;
-            figure
+            fig = figure;
             hold on
             grid on
             plot3(TBP.RVStates(1,:),TBP.RVStates(2,:),TBP.RVStates(3,:),'k',...
@@ -134,6 +135,7 @@ classdef TwoBodyOrbit < handle
             leg1 = legend('Orbit','Location','Best');
             axis equal
             set([title1,xl,yl,zl,leg1],'interpreter','latex','fontsize',12);
+            TBP.R3Plot = fig;
         end
         
         function TBP = plotOrbitalElements(TBP)
