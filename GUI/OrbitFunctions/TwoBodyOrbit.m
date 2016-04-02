@@ -214,8 +214,6 @@ classdef TwoBodyOrbit < handle
                 % Radius at periapsis
                 rp = TBP.initialKeplerElems(1)*(1 - TBP.initialKeplerElems(2));
                 periapsisAltitude = rp - TBP.Req;
-                %                 fprintf(['Periapsis altitude = ' num2str(periapsisAltitude) '\n']);
-                
                 safeAltRatio = (TBP.safetyAltitude + TBP.Req)/TBP.Req;
                 rpRatio = (rp)/TBP.Req;
                 if rpRatio <= safeAltRatio
@@ -224,9 +222,7 @@ classdef TwoBodyOrbit < handle
                 end
             elseif TBP.Req/1e3 > 10
                 rp = TBP.initialKeplerElems(1)*(1 - TBP.initialKeplerElems(2));
-                periapsisAltitude = rp - TBP.Req;
-                fprintf(['Periapsis altitude = ' num2str(periapsisAltitude) '\n']);
-                
+                periapsisAltitude = rp - TBP.Req;                
                 safeAltRatio = (TBP.safetyAltitude + TBP.Req)/TBP.Req;
                 rpRatio = (rp)/TBP.Req;
                 if rpRatio <= safeAltRatio

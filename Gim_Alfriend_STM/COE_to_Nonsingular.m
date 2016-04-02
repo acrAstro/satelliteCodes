@@ -1,9 +1,9 @@
-function NSElems = COE_to_Nonsingular(eleosc,tol)
-[~, f] = keplerSolve(eleosc(2), eleosc(6), tol);
-NSElems(1) = eleosc(1);
-NSElems(2) = eleosc(5)+f;
-NSElems(3) = eleosc(3);
-NSElems(4) = eleosc(2)*cos(eleosc(5));
-NSElems(5) = eleosc(2)*sin(eleosc(5));
-NSElems(6) = eleosc(4);
+function nsElems = COE_to_Nonsingular(kepElems,tol)
+[~, f] = keplerSolve(kepElems(2), kepElems(6), tol);
+nsElems(1) = kepElems(1);
+nsElems(2) = kepElems(5) + f;
+nsElems(3) = kepElems(3);
+nsElems(4) = kepElems(2)*cos(kepElems(5));
+nsElems(5) = kepElems(2)*sin(kepElems(5));
+nsElems(6) = kepElems(4);
 end

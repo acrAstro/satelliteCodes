@@ -34,22 +34,7 @@ classdef GimAlfriendSTM < handle
             GA.safetyAltitude = initStruct.params{7};
             GA.chiefOrbitDescription = initStruct.initChiefDescription;
             GA.deputyOrbitDescription = initStruct.initDeputyDescription;
-            method = GA.deputyOrbitDescription;
-            switch method
-                case 'Cartesian'
-                    GA.initialConditions = initStruct.RelState;
-                case 'Relative Nonsingular'
-                    GA.DepElemsInitNS = GA.ChiefElemsNSMean + initStruct.RelState;
-                    [~,GA.DepOsc] = MeanToOsculatingElements(GA.J2,GA.DepElemsInitNS,GA.Req,GA.mu);
-                    deltaElems = GA.DepOsc - GA.ChiefOsc;
-                    GA.initialConditions = SigmaMatrix(GA.J2,GA.ChiefOsc,GA.Req,GA.mu)*deltaElems;
-                case 'Relative Classical'
-                    GA.DepElemsInit = GA.kepElemsInit + initStruct.RelState;
-                    GA.DepElemsInitNS =  COE_to_Nonsingular(GA.DepElemsInit,GA.tol);
-                    [~,GA.DepOsc] = MeanToOsculatingElements(GA.J2,GA.DepElemsInitNS,GA.Req,GA.mu);
-                    deltaElems = GA.DepOsc - GA.ChiefOsc;
-                    GA.initialConditions = SigmaMatrix(GA.J2,GA.ChiefOsc,GA.Req,GA.mu)*deltaElems;
-            end
+            
             method = GA.chiefOrbitDescription;
             switch method
                 case 'Classical'
@@ -59,7 +44,25 @@ classdef GimAlfriendSTM < handle
                     [~,GA.ChiefOsc] = MeanToOsculatingElements(GA.J2,GA.ChiefElemsNSMean,GA.Req,GA.mu);
                 case 'Nonsingular'
                     GA.ChiefElemsNSMean = initStruct.Elements;
+                    GA.kepElemsInit = Nonsingular_to_COE(GA.ChiefElemsNSMean);
                     [~,GA.ChiefOsc] = MeanToOsculatingElements(GA.J2,GA.ChiefElemsNSMean,GA.Req,GA.mu);
+            end
+            
+            method = GA.deputyOrbitDescription;
+            switch method
+                case 'Cartesian'
+                    GA.initialConditions = initStruct.RelInitState;
+                case 'Relative Nonsingular'
+                    GA.DepElemsInitNS = GA.ChiefElemsNSMean + initStruct.RelInitState;
+                    [~,GA.DepOsc] = MeanToOsculatingElements(GA.J2,GA.DepElemsInitNS,GA.Req,GA.mu);
+                    deltaElems = GA.DepOsc - GA.ChiefOsc;
+                    GA.initialConditions = SigmaMatrix(GA.J2,GA.ChiefOsc,GA.Req,GA.mu)*deltaElems;
+                case 'Relative Classical'
+                    GA.DepElemsInit = GA.kepElemsInit + initStruct.RelInitState;
+                    GA.DepElemsInitNS =  COE_to_Nonsingular(GA.DepElemsInit,GA.tol);
+                    [~,GA.DepOsc] = MeanToOsculatingElements(GA.J2,GA.DepElemsInitNS,GA.Req,GA.mu);
+                    deltaElems = GA.DepOsc - GA.ChiefOsc;
+                    GA.initialConditions = SigmaMatrix(GA.J2,GA.ChiefOsc,GA.Req,GA.mu)*deltaElems;
             end
         end
         
@@ -89,15 +92,15 @@ classdef GimAlfriendSTM < handle
         
         function GA = PropagateGASTM(GA)
             GA.Phi = PHI_GA_STM(GA.time,GA.J2,GA.ChiefOsc,GA.ChiefElemsNSMean,GA.Req,GA.mu,GA.tol);
-            for ii = 1:length(t)
-            GA.X(:,ii) = GA.Phi(:,:,ii)*GA.initialConditions;
+            for ii = 1:length(GA.time)
+                GA.X(:,ii) = GA.Phi(:,:,ii)*GA.initialConditions;
             end
         end
-         
+        
         function GA = plotGAOrbit(GA)
-            x = GA.X(1,:);
-            y = GA.X(3,:);
-            z = GA.X(5,:);
+            x = 1e-3.*GA.X(1,:);
+            y = 1e-3.*GA.X(3,:);
+            z = 1e-3.*GA.X(5,:);
             
             figure
             hold on
@@ -105,9 +108,9 @@ classdef GimAlfriendSTM < handle
             plot3(x,y,z,'k','linewidth',2)
             axis tight
             title1 = title('$J_2$-Perturbed Relative Motion');
-            xl = xlabel('Radial, $x$, m');
-            yl = ylabel('In-track, $y$, m');
-            zl = zlabel('Cross-track, $z$, m');
+            xl = xlabel('Radial, $x$, km');
+            yl = ylabel('In-track, $y$, km');
+            zl = zlabel('Cross-track, $z$, km');
             set([title1,xl,yl,zl],'interpreter','latex','fontsize',12);
         end
     end
@@ -1142,4 +1145,23 @@ else
     theta = theta + (kk_minus+quad_minus)*(2*pi);
 end;
 
+end
+
+function nsElems = COE_to_Nonsingular(kepElems,tol)
+[~, f] = keplerSolve(kepElems(2), kepElems(6), tol);
+nsElems(1) = kepElems(1);
+nsElems(2) = kepElems(5) + f;
+nsElems(3) = kepElems(3);
+nsElems(4) = kepElems(2)*cos(kepElems(5));
+nsElems(5) = kepElems(2)*sin(kepElems(5));
+nsElems(6) = kepElems(4);
+end
+
+function kepElems = Nonsingular_to_COE(nsElems)
+    kepElems(1) = nsElems(1);
+    kepElems(2) = sqrt(nsElems(4)^2 + nsElems(5)^2);
+    kepElems(3) = nsElems(3);
+    kepElems(4) = nsElems(6);
+    kepElems(5) = acos(nsElems(4)/kepElems(2));
+    kepElems(6) = nsElems(2) - kepElems(5);
 end
