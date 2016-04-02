@@ -7,9 +7,9 @@ tol     = 1e-12; % tolerance for transcendental root finding
 safetyAltitude = 50e3;
 
 % Valid descriptions are 'Classical'; 'Nonsingular'
-chiefOrbitDescription = 'Classical';
+chiefOrbitDescription = 'Nonsingular';
 % Valid descriptions are 'Cartesian'; 'Relative Classical'; 'Relative Nonsingular'
-deputyOrbitDescription = 'Relative Nonsingular';
+deputyOrbitDescription = 'Relative Classical';
 
 [chiefOrbitDescription,deputyOrbitDescription] = checkDescriptors(chiefOrbitDescription,deputyOrbitDescription);
 
@@ -25,31 +25,28 @@ switch method
         w = pi/6;
         M0 = 0;
         n = sqrt(mu/a^3);
-        
         Elements = [a ecc inc raan w M0]';
     case 'Nonsingular'
-        % For some reason this set of orbital elements doesn't work
-        %  a = 8494.549e3;
-        %  th = 170.003*pi/180;
-        %  inc = 69.988*pi/180;
-        %  q1 = 9.420e-2;
-        %  q2 = 3.407e-2;
-        %  raan = 45.006*pi/180;
-        %  n = sqrt(mu/a^3);
-        %  Elements = [a th inc q1 q2 raan]';
-        %  ecc = sqrt(q1^2 + q2^2);
+         a = 8494.549e3;
+         th = 170.003*pi/180;
+         inc = 69.988*pi/180;
+         q1 = 9.420e-2;
+         q2 = 3.407e-2;
+         raan = 45.006*pi/180;
+         n = sqrt(mu/a^3);
+         Elements = [a th inc q1 q2 raan]';
+         ecc = sqrt(q1^2 + q2^2);
         
-        % This set of elements works
-        a = 6678e3;
-        ecc = 0.01;
-        inc = 45*pi/180;
-        raan = pi/4;
-        w = pi/6;
-        M0 = 0;
-        n = sqrt(mu/a^3);
-        Elements = [a ecc inc raan w M0]';
-        Elements = COE_to_Nonsingular(Elements,tol);
-        
+%         a = 6678e3;
+%         ecc = 0.01;
+%         inc = 45*pi/180;
+%         raan = pi/4;
+%         w = pi/6;
+%         M0 = 0;
+%         n = sqrt(mu/a^3);
+%         Elements = [a ecc inc raan w M0]';
+%         Elements = COE_to_Nonsingular(Elements,tol);
+%         
 end
 
 method = deputyOrbitDescription;
