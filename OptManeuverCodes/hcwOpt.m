@@ -81,13 +81,13 @@ classdef hcwOpt < handle
             % The initial conditions
             x1 = sdpvar(6,1);
             x2 = sdpvar(6,1);
-            
-            %% Build constraints and cost function
+            % Build constraints and cost function
             constraints = [];
             objective = 0;
             % The constraints are concatenated pointwise in time
             constraints = [constraints, x(:,1) == hcw.X0];
             for kk = 1:hcw.Nsim
+                % The cost funtion is additive pointwise in time
                 for jj = 1:hcw.nu
                     objective = objective + uslack(jj,kk);
                 end
