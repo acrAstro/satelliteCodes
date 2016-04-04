@@ -72,7 +72,7 @@ classdef hcwOpt < handle
         %
         % http://www.gurobi.com/
         %
-        function hcw = optimalTransfer(hcw)
+        function hcw = fuelOptimalTransfer(hcw)
             % Define the input sdpvars and slack sdpvars
             u = sdpvar(hcw.nu,hcw.Nsim);
             uslack = sdpvar(hcw.nu,hcw.Nsim);
@@ -120,7 +120,55 @@ classdef hcwOpt < handle
             hcw.optimalObjective = solutions{3};
             % Decimate the states and inputs so we don't have tons of
             % arrows pointing everywhere
-            [hcw.Xq,hcw.Uq] = quivThrust(hcw.Time(1:end-1),transpose(hcw.X),transpose(hcw.U),hcw.nu,1);
+            [hcw.Xq,hcw.Uq] = quivThrust(hcw.Time(1:end-1),transpose(hcw.X),transpose(hcw.U),hcw.nu,10);
+        end
+        
+        function hcw = energyOptimalTransfer(hcw)
+            % Define the input sdpvars
+            u = sdpvar(hcw.nu,hcw.Nsim);
+            % The state variables
+            x = sdpvar(6,hcw.Nsim+1);
+            % The initial conditions
+            x1 = sdpvar(6,1);
+            x2 = sdpvar(6,1);
+            % Build constraints and cost function
+            constraints = [];
+            objective = 0;
+            % The constraints are concatenated pointwise in time
+            constraints = [constraints, x(:,1) == hcw.X0];
+            for kk = 1:hcw.Nsim
+                % The cost funtion is additive pointwise in time
+                for jj = 1:hcw.nu
+                    objective = objective + u(jj,kk)^2;
+                end
+                constraints = [constraints, x(:,kk+1) == hcw.A*x(:,kk) + hcw.B*u(:,kk)];
+                for ii = 1:hcw.nu
+                    constraints = [constraints, hcw.Lb <= u(ii,kk) <= hcw.Ub];
+                end
+            end
+            constraints = [constraints, x(:,hcw.Nsim+1) == hcw.Xf];
+            % Settings for the optimization
+            options = sdpsettings('solver','gurobi','saveyalmipmodel',1,'verbose',3);
+            % The optimization problem is parameterized by the boundary
+            % conditions, so we include those here
+            parameters_in = {x1,x2};
+            % We want to return the optimal inputs, the state history, and
+            % the optimal value of the objective function, so we state that
+            % here
+            solutions_out = {u,x,objective};
+            % The controller object constructs the problem and transforms
+            % it for use with whatever optimizer you choose (Gurobi!!!)
+            controller = optimizer(constraints,objective,options,parameters_in,...
+                solutions_out);
+            % Solve the transfer problem using the boundry conditions
+            [solutions,~] = controller{{hcw.X0,hcw.Xf}};
+            % Extract the relevant information from the output
+            hcw.U = solutions{1};
+            hcw.X = solutions{2};
+            hcw.optimalObjective = solutions{3};
+            % Decimate the states and inputs so we don't have tons of
+            % arrows pointing everywhere
+            [hcw.Xq,hcw.Uq] = quivThrust(hcw.Time(1:end-1),transpose(hcw.X),transpose(hcw.U),hcw.nu,10);
         end
         
         function hcw = plotTransfer(hcw)

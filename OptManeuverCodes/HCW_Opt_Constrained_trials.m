@@ -3,7 +3,7 @@ clear all; close all; clc;
 mu = 3.986e14;
 a = 7000e3;
 n = sqrt(mu/a^3);
-nu = 3;
+nu = 2;
 nx = 6;
 mass = 1;
 [Ac,Bc] = HCW_Matrices(n,nu,mass);
@@ -12,7 +12,7 @@ period = 2*pi/n;
 dt = 1;
 % numPeriod = 1/10;
 % tf = numPeriod*period;
-tf = 300;
+tf = 1000;
 Nsim = round(tf/dt);
 Time = 0:dt:tf;
 sysc = ss(Ac,Bc,[],[]);
@@ -31,7 +31,7 @@ vx0 = 0;
 vy0 = 0;
 vz0 = 0;
 
-xf = 100;
+xf = 150;
 yf = 0;
 zf = 20;
 vxf = 0;
@@ -42,7 +42,6 @@ X0 = [x0 y0 z0 vx0 vy0 vz0]';
 Xf = [xf yf zf vxf vyf vzf]';
 
 u = sdpvar(nu,Nsim);
-uslack = sdpvar(nu,Nsim);
 
 x = sdpvar(6,Nsim+1);
 
@@ -56,12 +55,10 @@ objective = 0;
 constraints = [constraints, x(:,1) == X0];
 for kk = 1:Nsim
     for jj = 1:nu
-        objective = objective + uslack(jj,kk);
+        objective = objective + u(jj,kk)^2;
     end
     constraints = [constraints, x(:,kk+1) == A*x(:,kk) + B*u(:,kk)];
     for ii = 1:nu
-        constraints = [constraints, u(ii,kk) <= uslack(ii,kk)];
-        constraints = [constraints, -u(ii,kk) <= uslack(ii,kk)];
         constraints = [constraints, Lb <= u(ii,kk) <= Ub];
     end
 end
@@ -81,7 +78,7 @@ U = solutions{1};
 X = solutions{2};
 objectiveOpt = solutions{3};
 
-[Xq,Uq] = quivThrust(Time(1:end-1),transpose(X),transpose(U),nu,1);
+[Xq,Uq] = quivThrust(Time(1:end-1),transpose(X),transpose(U),nu,10);
 
 switch nu
     case 2
