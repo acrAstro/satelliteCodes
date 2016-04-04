@@ -1,6 +1,6 @@
 classdef hcwOpt < handle
-% This class constructs a fully-actuated or under-actuated, minimum-fuel
-% transfer for the HCW equations.
+    % This class constructs a fully-actuated or under-actuated, minimum-fuel
+    % transfer for the HCW equations.
     properties
         mu                  % gravitational parameter (m^3/s^2)
         a                   % semi-major axis of chief orbit (m)
@@ -26,6 +26,12 @@ classdef hcwOpt < handle
         Xq                  % states that use the quiver function to plot plumes
         Uq                  % inputs that use the quives function to plot plumes
         optimalObjective    % optimal objective
+        varhi
+        varlo
+        Xs
+        Us
+        tu
+        err
     end
     
     methods
@@ -59,6 +65,63 @@ classdef hcwOpt < handle
             hcw.Time = hcw.t0:hcw.dt:hcw.tf;
             hcw.Nsim = round(hcw.tf/hcw.dt);
             hcw.period = 2*pi/hcw.n;
+        end
+        
+        % This function defines the optimal control problem and then solves
+        % it and stores the output in the object fields we didn't use
+        % before. NOTE: the user MUST have the free Matlab toolbox CVX
+        % found at:
+        %
+        % http://cvxr.com/cvx/
+        %
+        % I also use the Gurobi optimizer for the linear program, found at:
+        %
+        % http://www.gurobi.com/
+        %
+        function hcw = feasibility(hcw)
+            Bt = [hcw.B,-hcw.B];
+            N = hcw.varhi;
+            hcw.err = 1;
+            % cvx_quiet(true);
+            
+            while (hcw.varhi ~= hcw.varlo)
+                %     N = round((varlo + varhi)/2);
+                cvx_begin
+                    variable Xt(n,N+1);
+                    variable Ut(nu,N);
+                subject to
+                    Xt(:,2:N+1) == hcw.A*Xt(:,1:N) + Bt*Ut;
+                    Xt(:,1) == hcw.X0;
+                    Xt(:,N+1) == hcw.Xf;
+                %         X(1:3,round((N+1)/2)) == xdesi;
+                    Ut >= 0;
+                    Ut <= hcw.Ub;
+                cvx_end
+                if ~isempty(strfind(cvx_status,'Solved'))
+                    hcw.varhi = N;
+                else
+                    hcw.varlo = N + 1;
+                end
+                if (hcw.varhi - hcw.varlo > 1)
+                    N = hcw.varlo + round((hcw.varhi - hcw.varlo)/2);
+                else
+                    N = hcw.varlo;
+                end
+                
+            end
+            
+            N = hcw.varhi;
+            cvx_begin
+                variable Xs(n,N+1);
+                variable Us(nu,N);
+            subject to
+                hcw.Xs(:,2:N+1) == hcw.A*hcw.Xs(:,1:N) + Bt*Us;
+                hcw.Xs(:,1) == hcw.X0;
+                hcw.Xs(:,N+1) == hcw.Xf;
+                hcw.Us >= 0;
+                hcw.Us <= hcw.Ub;
+            cvx_end
+            
         end
         
         % This function defines the optimal control problem and then solves
@@ -123,6 +186,17 @@ classdef hcwOpt < handle
             [hcw.Xq,hcw.Uq] = quivThrust(hcw.Time(1:end-1),transpose(hcw.X),transpose(hcw.U),hcw.nu,10);
         end
         
+        % This function defines the optimal control problem and then solves
+        % it and stores the output in the object fields we didn't use
+        % before. NOTE: the user MUST have the free Matlab toolbox YALMIP
+        % found at:
+        %
+        % http://users.isy.liu.se/johanl/yalmip/
+        %
+        % I also use the Gurobi optimizer for the linear program, found at:
+        %
+        % http://www.gurobi.com/
+        %
         function hcw = energyOptimalTransfer(hcw)
             % Define the input sdpvars
             u = sdpvar(hcw.nu,hcw.Nsim);
