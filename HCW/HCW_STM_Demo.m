@@ -28,6 +28,7 @@ period = 2*pi/n;
 
 % Number of orbital periods
 numPeriod = 1;
+disp(numPeriod)
 
 % Total analysis time, given in seconds
 tf = numPeriod*period;
