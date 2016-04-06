@@ -30,6 +30,16 @@ vzf = 0;
 X0 = [x0 y0 z0 vx0 vy0 vz0]';  initStruct.X0 = X0;
 Xf = [xf yf zf vxf vyf vzf]';  initStruct.Xf = Xf;
 
-hcw = hcwOpt(initStruct);
-hcw.energyOptimalTransfer();
-hcw.plotTransfer();
+varlo = 50;
+varhi = 1000;
+err = 1;
+initStruct.feasParams = {varhi,varlo,err};
+
+hcwME = hcwOpt(initStruct);
+% hcw.feasibility();
+hcwME.energyOptimalTransfer();
+hcwME.plotTransfer();
+
+hcwMT = hcwOpt(initStruct);
+hcwMT.fuelOptimalTransfer();
+hcwMT.plotTransfer();

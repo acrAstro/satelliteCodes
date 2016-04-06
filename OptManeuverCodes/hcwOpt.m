@@ -26,12 +26,13 @@ classdef hcwOpt < handle
         Xq                  % states that use the quiver function to plot plumes
         Uq                  % inputs that use the quives function to plot plumes
         optimalObjective    % optimal objective
-        varhi
-        varlo
-        Xs
-        Us
-        tu
-        err
+        varhi               % upper bound on feasibility
+        varlo               % lower bound on feasibility
+        Xs                  % minimum time state solution
+        Us                  % minimum time control solution
+        tu                  % minimum time vector
+        err                 % bisection error
+        feas                % status of feasibility (1=yes,0=n)
     end
     
     methods
@@ -57,6 +58,19 @@ classdef hcwOpt < handle
             hcw.makeTimeVector();
             hcw.X0 = initStruct.X0;
             hcw.Xf = initStruct.Xf;
+            try
+                exist(initStruct.feasParams,'var')
+            catch ME
+                if strcmp(ME.identifier,'MATLAB:nonExistentField') == 1
+                    hcw.varhi = [];
+                    hcw.varlo = [];
+                    hcw.err = [];
+                else
+                    hcw.varhi = initStruct.feasParams{1};
+                    hcw.varlo = initStruct.feasParams{2};
+                    hcw.err = initStruct.feasParams{3};
+                end
+            end
         end
         
         % This function makes the time vector (probably not necessary, but
@@ -78,50 +92,13 @@ classdef hcwOpt < handle
         %
         % http://www.gurobi.com/
         %
+        % and the SDPT3 toolbox found at:
+        %
+        % http://www.math.nus.edu.sg/~mattohkc/sdpt3.html
+        %
         function hcw = feasibility(hcw)
-            Bt = [hcw.B,-hcw.B];
-            N = hcw.varhi;
-            hcw.err = 1;
-            % cvx_quiet(true);
-            
-            while (hcw.varhi ~= hcw.varlo)
-                %     N = round((varlo + varhi)/2);
-                cvx_begin
-                    variable Xt(n,N+1);
-                    variable Ut(nu,N);
-                subject to
-                    Xt(:,2:N+1) == hcw.A*Xt(:,1:N) + Bt*Ut;
-                    Xt(:,1) == hcw.X0;
-                    Xt(:,N+1) == hcw.Xf;
-                %         X(1:3,round((N+1)/2)) == xdesi;
-                    Ut >= 0;
-                    Ut <= hcw.Ub;
-                cvx_end
-                if ~isempty(strfind(cvx_status,'Solved'))
-                    hcw.varhi = N;
-                else
-                    hcw.varlo = N + 1;
-                end
-                if (hcw.varhi - hcw.varlo > 1)
-                    N = hcw.varlo + round((hcw.varhi - hcw.varlo)/2);
-                else
-                    N = hcw.varlo;
-                end
-                
-            end
-            
-            N = hcw.varhi;
-            cvx_begin
-                variable Xs(n,N+1);
-                variable Us(nu,N);
-            subject to
-                hcw.Xs(:,2:N+1) == hcw.A*hcw.Xs(:,1:N) + Bt*Us;
-                hcw.Xs(:,1) == hcw.X0;
-                hcw.Xs(:,N+1) == hcw.Xf;
-                hcw.Us >= 0;
-                hcw.Us <= hcw.Ub;
-            cvx_end
-            
+            [hcw.tu,hcw.Xs,hcw.Us] = minTimeFeasibility(hcw.A,hcw.B,...
+                hcw.varhi,hcw.varlo,hcw.err,hcw.X0,hcw.Xf);
         end
         
         % This function defines the optimal control problem and then solves
@@ -250,7 +227,7 @@ classdef hcwOpt < handle
             % forces
             switch hcw.nu
                 case 2
-                    figure
+                    figure(1)
                     hold on
                     grid on
                     plot3(hcw.X(1,:),hcw.X(2,:),hcw.X(3,:),'k','linewidth',2)
@@ -266,7 +243,7 @@ classdef hcwOpt < handle
                     set([title1 xl yl zl leg1],'interpreter','latex','fontsize',11)
                     view([-90,90])
                     
-                    figure
+                    figure(2)
                     subplot(211)
                     hold on
                     grid on
@@ -289,7 +266,7 @@ classdef hcwOpt < handle
                     
                 case 3
                     
-                    figure
+                    figure(1)
                     hold on
                     grid on
                     plot3(hcw.X(1,:),hcw.X(2,:),hcw.X(3,:),'k','linewidth',2)
@@ -305,7 +282,7 @@ classdef hcwOpt < handle
                     set([title1 xl yl zl leg1],'interpreter','latex','fontsize',11)
                     view([-90,90])
                     
-                    figure
+                    figure(2)
                     subplot(311)
                     hold on
                     grid on
@@ -327,6 +304,98 @@ classdef hcwOpt < handle
                     hold on
                     grid on
                     plot(hcw.Time(1:end-1),hcw.U(3,:),'k','linewidth',2)
+                    plot([hcw.Time(1), hcw.Time(end)],[hcw.Ub, hcw.Ub],'k--','LineWidth',2)
+                    plot([hcw.Time(1), hcw.Time(end)],[hcw.Lb, hcw.Lb],'k--','LineWidth',2)
+                    axis([hcw.Time(1),hcw.Time(end),2*hcw.Lb,2*hcw.Ub])
+                    yl3 = ylabel('Cross-track, $u_z$, N');
+                    xl = xlabel('Time, $t$, s');
+                    set([title1,yl1,yl2,yl3,xl],'interpreter','latex','fontsize',11)
+            end
+            
+        end
+        
+        function hcw = plotTransferFeasibility(hcw)
+            % This function plots the relative trajectory and the control
+            % forces from the feasibility problem
+            switch hcw.nu
+                case 2
+                    figure
+                    hold on
+                    grid on
+                    plot3(hcw.Xs(1,:),hcw.Xs(2,:),hcw.Xs(3,:),'k','linewidth',2)
+                    axis tight
+                    plot3(hcw.X0(1),hcw.X0(2),hcw.X0(3),'b.','MarkerSize',25)
+                    plot3(hcw.Xf(1),hcw.Xf(2),hcw.Xf(3),'r.','MarkerSize',25)
+                    %                     quiver3(hcw.Xq(:,1),hcw.Xq(:,2),hcw.Xq(:,3),zeros(size(hcw.Uq(:,1))),hcw.Uq(:,1),hcw.Uq(:,2),'r','LineWidth',2);
+                    title1 = title('Trajectory in Space');
+                    xl = xlabel('Radial, $x$, m');
+                    yl = ylabel('In-track, $y$, m');
+                    zl = zlabel('Cross-track, $z$, m');
+                    leg1 = legend('$x(t)$','$x_0$','$x_f$','location','best');
+                    set([title1 xl yl zl leg1],'interpreter','latex','fontsize',11)
+                    view([-90,90])
+                    
+                    figure
+                    subplot(211)
+                    hold on
+                    grid on
+                    plot(hcw.tu,hcw.Us(1,:),'k','linewidth',2)
+                    plot([hcw.Time(1), hcw.Time(end)],[hcw.Ub, hcw.Ub],'k--','LineWidth',2)
+                    plot([hcw.Time(1), hcw.Time(end)],[hcw.Lb, hcw.Lb],'k--','LineWidth',2)
+                    axis([hcw.Time(1),hcw.Time(end),2*hcw.Lb,2*hcw.Ub])
+                    title1 = title('Under-actuated Minimum Fuel Transfer');
+                    yl1 = ylabel('In-track, $u_y$, N');
+                    subplot(212)
+                    hold on
+                    grid on
+                    plot(hcw.tu,hcw.Us(2,:),'k','linewidth',2)
+                    plot([hcw.Time(1), hcw.Time(end)],[hcw.Ub, hcw.Ub],'k--','LineWidth',2)
+                    plot([hcw.Time(1), hcw.Time(end)],[hcw.Lb, hcw.Lb],'k--','LineWidth',2)
+                    axis([hcw.Time(1),hcw.Time(end),2*hcw.Lb,2*hcw.Ub])
+                    yl2 = ylabel('Cross-track, $u_z$, N');
+                    xl = xlabel('Time, $t$, s');
+                    set([title1, yl1, yl2, xl],'interpreter','latex','fontsize',11)
+                    
+                case 3
+                    
+                    figure
+                    hold on
+                    grid on
+                    plot3(hcw.Xs(1,:),hcw.Xs(2,:),hcw.Xs(3,:),'k','linewidth',2)
+                    axis tight
+                    plot3(hcw.X0(1),hcw.X0(2),hcw.X0(3),'b.','MarkerSize',25)
+                    plot3(hcw.Xf(1),hcw.Xf(2),hcw.Xf(3),'r.','MarkerSize',25)
+                    %                     quiver3(hcw.Xq(:,1),hcw.Xq(:,2),hcw.Xq(:,3),hcw.Uq(:,1),hcw.Uq(:,2),hcw.Uq(:,3),'r','LineWidth',2);
+                    title1 = title('Trajectory in Space');
+                    xl = xlabel('Radial, $x$, m');
+                    yl = ylabel('In-track, $y$, m');
+                    zl = zlabel('Cross-track, $z$, m');
+                    leg1 = legend('$x(t)$','$x_0$','$x_f$','location','best');
+                    set([title1 xl yl zl leg1],'interpreter','latex','fontsize',11)
+                    view([-90,90])
+                    
+                    figure
+                    subplot(311)
+                    hold on
+                    grid on
+                    plot(hcw.tu,hcw.Us(1,:),'k','linewidth',2)
+                    plot([hcw.Time(1), hcw.Time(end)],[hcw.Ub, hcw.Ub],'k--','LineWidth',2)
+                    plot([hcw.Time(1), hcw.Time(end)],[hcw.Lb, hcw.Lb],'k--','LineWidth',2)
+                    axis([hcw.Time(1),hcw.Time(end),2*hcw.Lb,2*hcw.Ub])
+                    title1 = title('Fully-actuated Minimum Fuel Transfer');
+                    yl1 = ylabel('Radial, $u_x$, N');
+                    subplot(312)
+                    hold on
+                    grid on
+                    plot(hcw.tu,hcw.Us(2,:),'k','linewidth',2)
+                    plot([hcw.Time(1), hcw.Time(end)],[hcw.Ub, hcw.Ub],'k--','LineWidth',2)
+                    plot([hcw.Time(1), hcw.Time(end)],[hcw.Lb, hcw.Lb],'k--','LineWidth',2)
+                    axis([hcw.Time(1),hcw.Time(end),2*hcw.Lb,2*hcw.Ub])
+                    yl2 = ylabel('In-track, $u_y$, N');
+                    subplot(313)
+                    hold on
+                    grid on
+                    plot(hcw.tu,hcw.Us(3,:),'k','linewidth',2)
                     plot([hcw.Time(1), hcw.Time(end)],[hcw.Ub, hcw.Ub],'k--','LineWidth',2)
                     plot([hcw.Time(1), hcw.Time(end)],[hcw.Lb, hcw.Lb],'k--','LineWidth',2)
                     axis([hcw.Time(1),hcw.Time(end),2*hcw.Lb,2*hcw.Ub])
@@ -371,4 +440,53 @@ switch nu
         B = 1/mass.*[zeros(3,3); eye(3)];
 end
 
+end
+
+function [T,X,U] = minTimeFeasibility(A,B,varhi,varlo,err,X0,Xf)
+Bt = [B,-B];
+nu = size(B,2);
+N = varhi;
+while (varhi ~= varlo)
+    Xt = zeros(6,N+1);
+    Ut = zeros(nu,N);
+    cvx_begin
+        variable Xt(6,N+1);
+        variable Ut(nu,N);
+    subject to
+        Xt(:,2:N+1) == A*Xt(:,1:N) + Bt*Ut;
+        Xt(:,1) == X0;
+        Xt(:,N+1) == Xf;
+        Ut >= 0;
+        Ut <= Ub;
+    cvx_end
+    if ~isempty(strfind(cvx_statU,'Solved'))
+        varhi = N;
+        feas = 1;
+    else
+        varlo = N + 1;
+        feas = 0;
+    end
+    if (varhi - varlo > 1)
+        N = varlo + round((varhi - varlo)/2);
+    else
+        N = varlo;
+    end
+end
+
+if feas == 1
+    N = varhi;
+    cvx_begin
+        variable X(n,N+1);
+        variable U(nu,N);
+    subject to
+        X(:,2:N+1) == A*X(:,1:N) + Bt*U;
+        X(:,1) == X0;
+        X(:,N+1) == Xf;
+        U >= 0;
+        U <= Ub;
+    cvx_end
+else
+    X = [];
+    U = [];
+end
 end
