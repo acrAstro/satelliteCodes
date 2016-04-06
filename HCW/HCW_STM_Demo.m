@@ -18,7 +18,8 @@ clear all; close all; clc;
 mu = 3.986e14;
 
 % Semi-major axis of chief orbit
-a = 7000e3;
+a = 10000e3; %Changed this
+disp(a)
 
 % Mean motion
 n = sqrt(mu/a^3);
