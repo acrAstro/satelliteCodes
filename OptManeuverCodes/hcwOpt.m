@@ -222,7 +222,12 @@ classdef hcwOpt < handle
             [hcw.Xq,hcw.Uq] = quivThrust(hcw.Time(1:end-1),transpose(hcw.X),transpose(hcw.U),hcw.nu,10);
         end
         
-        function hcw = plotTransfer(hcw)
+        function hcw = plotTransfer(hcw,color)
+            if nargin < 2 || isempty(color)
+                plotColor = 'k';
+            else
+                plotColor = color;
+            end 
             % This function plots the relative trajectory and the control
             % forces
             switch hcw.nu
@@ -230,7 +235,7 @@ classdef hcwOpt < handle
                     figure(1)
                     hold on
                     grid on
-                    plot3(hcw.X(1,:),hcw.X(2,:),hcw.X(3,:),'k','linewidth',2)
+                    plot3(hcw.X(1,:),hcw.X(2,:),hcw.X(3,:),plotColor,'linewidth',2)
                     axis tight
                     plot3(hcw.X0(1),hcw.X0(2),hcw.X0(3),'b.','MarkerSize',25)
                     plot3(hcw.Xf(1),hcw.Xf(2),hcw.Xf(3),'r.','MarkerSize',25)
@@ -247,7 +252,7 @@ classdef hcwOpt < handle
                     subplot(211)
                     hold on
                     grid on
-                    plot(hcw.Time(1:end-1),hcw.U(1,:),'k','linewidth',2)
+                    plot(hcw.Time(1:end-1),hcw.U(1,:),plotColor,'linewidth',2)
                     plot([hcw.Time(1), hcw.Time(end)],[hcw.Ub, hcw.Ub],'k--','LineWidth',2)
                     plot([hcw.Time(1), hcw.Time(end)],[hcw.Lb, hcw.Lb],'k--','LineWidth',2)
                     axis([hcw.Time(1),hcw.Time(end),2*hcw.Lb,2*hcw.Ub])
@@ -256,7 +261,7 @@ classdef hcwOpt < handle
                     subplot(212)
                     hold on
                     grid on
-                    plot(hcw.Time(1:end-1),hcw.U(2,:),'k','linewidth',2)
+                    plot(hcw.Time(1:end-1),hcw.U(2,:),plotColor,'linewidth',2)
                     plot([hcw.Time(1), hcw.Time(end)],[hcw.Ub, hcw.Ub],'k--','LineWidth',2)
                     plot([hcw.Time(1), hcw.Time(end)],[hcw.Lb, hcw.Lb],'k--','LineWidth',2)
                     axis([hcw.Time(1),hcw.Time(end),2*hcw.Lb,2*hcw.Ub])
@@ -269,7 +274,7 @@ classdef hcwOpt < handle
                     figure(1)
                     hold on
                     grid on
-                    plot3(hcw.X(1,:),hcw.X(2,:),hcw.X(3,:),'k','linewidth',2)
+                    plot3(hcw.X(1,:),hcw.X(2,:),hcw.X(3,:),plotColor,'linewidth',2)
                     axis tight
                     plot3(hcw.X0(1),hcw.X0(2),hcw.X0(3),'b.','MarkerSize',25)
                     plot3(hcw.Xf(1),hcw.Xf(2),hcw.Xf(3),'r.','MarkerSize',25)
@@ -286,7 +291,7 @@ classdef hcwOpt < handle
                     subplot(311)
                     hold on
                     grid on
-                    plot(hcw.Time(1:end-1),hcw.U(1,:),'k','linewidth',2)
+                    plot(hcw.Time(1:end-1),hcw.U(1,:),plotColor,'linewidth',2)
                     plot([hcw.Time(1), hcw.Time(end)],[hcw.Ub, hcw.Ub],'k--','LineWidth',2)
                     plot([hcw.Time(1), hcw.Time(end)],[hcw.Lb, hcw.Lb],'k--','LineWidth',2)
                     axis([hcw.Time(1),hcw.Time(end),2*hcw.Lb,2*hcw.Ub])
@@ -295,7 +300,7 @@ classdef hcwOpt < handle
                     subplot(312)
                     hold on
                     grid on
-                    plot(hcw.Time(1:end-1),hcw.U(2,:),'k','linewidth',2)
+                    plot(hcw.Time(1:end-1),hcw.U(2,:),plotColor,'linewidth',2)
                     plot([hcw.Time(1), hcw.Time(end)],[hcw.Ub, hcw.Ub],'k--','LineWidth',2)
                     plot([hcw.Time(1), hcw.Time(end)],[hcw.Lb, hcw.Lb],'k--','LineWidth',2)
                     axis([hcw.Time(1),hcw.Time(end),2*hcw.Lb,2*hcw.Ub])
@@ -303,7 +308,7 @@ classdef hcwOpt < handle
                     subplot(313)
                     hold on
                     grid on
-                    plot(hcw.Time(1:end-1),hcw.U(3,:),'k','linewidth',2)
+                    plot(hcw.Time(1:end-1),hcw.U(3,:),plotColor,'linewidth',2)
                     plot([hcw.Time(1), hcw.Time(end)],[hcw.Ub, hcw.Ub],'k--','LineWidth',2)
                     plot([hcw.Time(1), hcw.Time(end)],[hcw.Lb, hcw.Lb],'k--','LineWidth',2)
                     axis([hcw.Time(1),hcw.Time(end),2*hcw.Lb,2*hcw.Ub])
