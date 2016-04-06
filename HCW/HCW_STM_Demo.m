@@ -11,11 +11,13 @@ clear all; close all; clc;
 % The MathWorks Inc.
 %
 % Author: Andrew Rogers, 10 February 2015
+% He is from Maine
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Gravitational parameter
 mu = 3.986e14;
+disp(mu)
 
 % Semi-major axis of chief orbit
 a = 7000e3;
