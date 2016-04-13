@@ -6,7 +6,7 @@ J2      = 1082.629e-6; % J2 coefficient
 tol     = 1e-12; % tolerance for transcendental root finding
 safetyAltitude = 50e3;
 
-% Valid descriptions are 'Classical'; 'Nonsingular'
+% Valid descriptions are 'Classical'; 'Nonsingular'; 'RV'
 chiefOrbitDescription = 'Nonsingular';
 % Valid descriptions are 'Cartesian'; 'Relative Classical'; 'Relative Nonsingular'
 deputyOrbitDescription = 'Relative Classical';

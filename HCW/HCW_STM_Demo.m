@@ -16,6 +16,7 @@ clear all; close all; clc;
 
 % Gravitational parameter
 mu = 3.986e14;
+disp(mu)
 
 % Semi-major axis of chief orbit
 a = 7000e3;

@@ -7,7 +7,7 @@ tol     = 1e-12; % tolerance for transcendental root finding
 safetyAltitude = 50e3;
 
 % Valid descriptions are 'Classical'; 'Nonsingular'
-chiefOrbitDescription = 'Nonsingular';
+chiefOrbitDescription = 'Classical';
 % Valid descriptions are 'Cartesian'; 'Relative Classical'; 'Relative Nonsingular'
 deputyOrbitDescription = 'Relative Classical';
 
@@ -35,18 +35,7 @@ switch method
          raan = 45.006*pi/180;
          n = sqrt(mu/a^3);
          Elements = [a th inc q1 q2 raan]';
-         ecc = sqrt(q1^2 + q2^2);
-        
-%         a = 6678e3;
-%         ecc = 0.01;
-%         inc = 45*pi/180;
-%         raan = pi/4;
-%         w = pi/6;
-%         M0 = 0;
-%         n = sqrt(mu/a^3);
-%         Elements = [a ecc inc raan w M0]';
-%         Elements = COE_to_Nonsingular(Elements,tol);
-%         
+         ecc = sqrt(q1^2 + q2^2);         
 end
 
 method = deputyOrbitDescription;
@@ -61,12 +50,12 @@ switch method
         zd0 = 0;
         RelInitState = [x0 xd0 y0 yd0 z0 zd0]';
     case 'Relative Classical'
-        da = 103.624;
-        de = 0.0001;
-        di = 0.02*pi/180;
-        dO = 0.02*pi/180;
+        da = 0;
+        de = 0;
+        di = 0.2*pi/180;
+        dO = 0*pi/180;
         dw = 0;
-        dM = 0.01*pi/180;
+        dM = 0*pi/180;
         RelInitState = [da de di dO dw dM]';
     case 'Relative Nonsingular'
         da = -103.624;

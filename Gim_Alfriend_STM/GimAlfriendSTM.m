@@ -1,18 +1,24 @@
 classdef GimAlfriendSTM < handle
-    
+%% Gim-Alfriend State Transition Matrix Class
+%
+% This class contains the objects necessary to propagate the Gim-Alfriend
+% STM (Gim and Alfriend, 2003). The class accepts chief element
+% descriptions of Classical or Nonsingular, and relative deputy state
+% descriptions of Cartesian, relative classical, or relative nonsingular.
+%
     properties
-        Phi
-        time
-        J2
-        ChiefOsc
-        Req
-        mu
-        tol
-        ChiefElemsNSMean
-        chiefOrbitDescription
-        deputyOrbitDescription
-        initialConditions
-        kepElemsInit
+        Phi                     % The Gim-Alfriend STM history
+        time                    % Time vector
+        J2                      % J2 zonal harmonic, 1082.63e-6, or zero!
+        ChiefOsc                % Chief osculating elements
+        Req                     % Radius of the Earth
+        mu                      % Gravitational parameter of Earth
+        tol                     % Tolerance for Kepler solver
+        ChiefElemsNSMean        % Mean, nonsingular description of Chief
+        chiefOrbitDescription   % Descriptor flag for chief
+        deputyOrbitDescription  % Descriptor flag for deputy
+        initialConditions       % Deputy initial conditions
+        kepElemsInit            % Initial Kepler Elements of 
         DepElemsInit
         DepElemsInitNS
         DepOsc
