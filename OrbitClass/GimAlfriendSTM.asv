@@ -97,16 +97,15 @@ classdef GimAlfriendSTM < handle
                     GA.time = linspace(GA.t0,tf,100.*GA.numPeriod);
             end
         end
-   
-        % Propgates the system forward
+        
+        % Propgates the 
         function GA = PropagateGASTM(GA)
             GA.Phi = PHI_GA_STM(GA.time,GA.J2,GA.ChiefOsc,GA.ChiefElemsNSMean,GA.Req,GA.mu,GA.tol);
             for ii = 1:length(GA.time)
                 GA.X(:,ii) = GA.Phi(:,:,ii)*GA.initialConditions;
             end
         end
-
-        % Plots the orbit
+        
         function GA = plotGAOrbit(GA)
             x = 1e-3.*GA.X(1,:);
             y = 1e-3.*GA.X(3,:);
