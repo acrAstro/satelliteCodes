@@ -7,7 +7,7 @@ tol     = 1e-12; % tolerance for transcendental root finding
 safetyAltitude = 50e3;
 
 % Valid descriptions are 'Classical'; 'Nonsingular'
-chiefOrbitDescription = 'Classical';
+chiefOrbitDescription = 'Nonsingular';
 % Valid descriptions are 'Cartesian'; 'Relative Classical'; 'Relative Nonsingular'
 deputyOrbitDescription = 'Relative Classical';
 
