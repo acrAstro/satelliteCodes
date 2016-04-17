@@ -17,13 +17,23 @@ double getVelocity(double SMA, double mu)
   return v;
 }
 
+double kpsToMPH(double kps)
+{
+  double cf = 2236.936; // 1 km/s is 2236.936 mph
+  double mph = kps*cf;
+  return mph;
+}
+
+
 int main()
 {
   double mu = 3.986e5; // Gravitational parameter of Earth
   double SMA = getSMA();
-  double v = getVelocity(SMA,mu);
+  double vkps = getVelocity(SMA,mu);
+  double vmph = kpsToMPH(vkps);
   std::cout << "\n";
-  std::cout << "The LEO, circular velocity of the satellite is: " << v << " km/s" << std::endl;
+  std::cout << "The LEO, circular velocity of the satellite is: " << vkps << " km/s" << std::endl;
+  std::cout << "The LEO, circular velocity of the satellite is: " << vmph << " mph"  << std::endl;
   std::cout << "\n";
   return 0;
 }
