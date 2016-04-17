@@ -19,8 +19,9 @@ double getVelocity(double SMA, double mu)
 
 double kpsToMPH(double kps)
 {
-  double cf = 2236.936; // 1 km/s is 2239.936 mph;
+  double cf = 2236.936; // 1 km/s is 2236.936 mph
   double mph = kps*cf;
+  return mph;
 }
 
 
