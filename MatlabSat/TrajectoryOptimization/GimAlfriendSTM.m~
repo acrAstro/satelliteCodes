@@ -1,4 +1,4 @@
-classdef GimAlfriendSTM < FormationFlying
+classdef GimAlfriendSTM < handle
 %% Gim-Alfriend State Transition Matrix Class
 %
 % This class contains the objects necessary to propagate the Gim-Alfriend
@@ -8,7 +8,8 @@ classdef GimAlfriendSTM < FormationFlying
 %
     properties
         Phi                     % The Gim-Alfriend STM history
-        time                    % Time vector
+        X
+        
         J2                      % J2 zonal harmonic, 1082.63e-6, or zero!
         ChiefOsc                % Chief osculating elements
         Req                     % Radius of the Earth
@@ -22,8 +23,13 @@ classdef GimAlfriendSTM < FormationFlying
         DepElemsInit
         DepElemsInitNS
         DepOsc
-        X
+
+        
         t0
+        dt
+        tf
+        time                    % Time vector
+        numSteps
         numPeriod
         safetyAltitude
         period
@@ -31,14 +37,15 @@ classdef GimAlfriendSTM < FormationFlying
     
     methods
         function obj = GimAlfriendSTM(initStruct)
-            obj@FormationFlying(initStruct.params{5},initStruct.params{6},initStruct.params{2});
+%             obj@FormationFlying(initStruct.params{5},initStruct.params{6},initStruct.params{2});
             obj.Req = initStruct.params{1};
-%             obj.mu = initStruct.params{2};
+            obj.mu = initStruct.params{2};
             obj.J2 = initStruct.params{3};
             obj.tol = initStruct.params{4};
-%             obj.t0 = initStruct.params{5};
-%             obj.numPeriod = initStruct.params{6};
+            obj.t0 = initStruct.params{5};
+            obj.numPeriod = initStruct.params{6};
             obj.safetyAltitude = initStruct.params{7};
+            obj.numSteps = initStruct.params{8};
             obj.chiefOrbitDescription = initStruct.initChiefDescription;
             obj.deputyOrbitDescription = initStruct.initDeputyDescription;
             
@@ -71,6 +78,7 @@ classdef GimAlfriendSTM < FormationFlying
                     deltaElems = obj.DepOsc - obj.ChiefOsc;
                     obj.initialConditions = SigmaMatrix(obj.J2,obj.ChiefOsc,obj.Req,obj.mu)*deltaElems;
             end
+            
         end
         
         function obj = makeTimeVector(obj)
@@ -83,8 +91,9 @@ classdef GimAlfriendSTM < FormationFlying
                     else
                     end
                     obj.period = 2*pi/n;
-                    tf = obj.numPeriod*obj.period;
-                    obj.time = linspace(obj.t0,tf,100.*obj.numPeriod);
+                    obj.tf = obj.numPeriod*obj.period;
+                    obj.time = linspace(obj.t0,obj.tf,obj.numSteps.*obj.numPeriod);
+                    obj.dt = (obj.tf - obj.t0)/obj.numSteps*obj.numPeriod;
                 case 'Nonsingular'
                     n = sqrt(obj.mu/obj.ChiefElemsNSMean(1)^3);
                     if isempty(obj.t0)
@@ -92,8 +101,9 @@ classdef GimAlfriendSTM < FormationFlying
                     else
                     end
                     obj.period = 2*pi/n;
-                    tf = obj.numPeriod*obj.period;
-                    obj.time = linspace(obj.t0,tf,100.*obj.numPeriod);
+                    obj.tf = obj.numPeriod*obj.period;
+                    obj.time = linspace(obj.t0,obj.tf,obj.numSteps.*obj.numPeriod);
+                    obj.dt = (obj.tf - obj.t0)/obj.numSteps*obj.numPeriod;
             end
         end
         
@@ -1171,4 +1181,46 @@ function kepElems = Nonsingular_to_COE(nsElems)
     kepElems(4) = nsElems(6);
     kepElems(5) = acos(nsElems(4)/kepElems(2));
     kepElems(6) = nsElems(2) - kepElems(5);
+end
+
+function [E, f] = keplerSolve(e, M, Tol1);
+
+% Kepler's Equation
+E = M;
+FF = 1;
+while abs(FF) > Tol1
+    FF = M - (E - e*sin(E));
+    dFFdE = -(1 - e*cos(E));
+    del_E = -FF / dFFdE;
+    E = E + del_E;
+end
+while (E < 0)
+    E = E + (2*pi);
+end
+while (E >= (2*pi))
+    E = E - (2*pi);
+end
+
+%
+kk_plus = 0;
+while (M < 0)
+    kk_plus = kk_plus + 1;
+    M = M + (2*pi);
+end
+kk_minus = 0;
+while (M >= (2*pi))
+    kk_minus = kk_minus + 1;
+    M = M - (2*pi);
+end
+
+% True Anomaly
+f = 2*atan(sqrt((1+e)/(1-e))*tan(E/2));
+if (E >= 0) && (E <= (pi))
+    f = abs(f);
+else
+    f = (2*pi) - abs(f);
+end;
+
+f = f - kk_plus*(2*pi) + kk_minus*(2*pi);
+
 end
