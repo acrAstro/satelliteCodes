@@ -5,6 +5,8 @@ mu      = 3.986004415e14; % Gravitational parameter (m^3/s^2)
 J2      = 1082.629e-6; % J2 coefficient
 tol     = 1e-12; % tolerance for transcendental root finding
 safetyAltitude = 50e3;
+samples = 3;
+B = [zeros(3,3); eye(3)];
 
 % Valid descriptions are 'Classical'; 'Nonsingular'
 chiefOrbitDescription = 'Nonsingular';
@@ -69,12 +71,13 @@ end
 
 t0 = 0; numPeriod = 3; numSteps = 100;
 
-initStruct.params = {Req,mu,J2,tol,t0,numPeriod,safetyAltitude,numSteps};
+initStruct.params = {Req,mu,J2,tol,t0,numPeriod,safetyAltitude,numSteps,samples,B};
 initStruct.initChiefDescription = chiefOrbitDescription;
 initStruct.initDeputyDescription = deputyOrbitDescription;
 initStruct.RelInitState = RelInitState(:);
 initStruct.Elements = Elements(:);
 
 GA = GimAlfriendSTM(initStruct);
-GA.PropagateModel();
+GA.propagateState();
 GA.plotOrbit();
+GA.makeDiscreteMatrices();

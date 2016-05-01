@@ -9,6 +9,9 @@ classdef GimAlfriendSTM < handle
     properties
         Phi                     % The Gim-Alfriend STM history
         X
+        Ak
+        Bk
+        B
         
         J2                      % J2 zonal harmonic, 1082.63e-6, or zero!
         ChiefOsc                % Chief osculating elements
@@ -23,13 +26,13 @@ classdef GimAlfriendSTM < handle
         DepElemsInit
         DepElemsInitNS
         DepOsc
-
         
         t0
         dt
         tf
         time                    % Time vector
         numSteps
+        samples
         numPeriod
         safetyAltitude
         period
@@ -37,7 +40,6 @@ classdef GimAlfriendSTM < handle
     
     methods
         function obj = GimAlfriendSTM(initStruct)
-%             obj@FormationFlying(initStruct.params{5},initStruct.params{6},initStruct.params{2});
             obj.Req = initStruct.params{1};
             obj.mu = initStruct.params{2};
             obj.J2 = initStruct.params{3};
@@ -46,6 +48,8 @@ classdef GimAlfriendSTM < handle
             obj.numPeriod = initStruct.params{6};
             obj.safetyAltitude = initStruct.params{7};
             obj.numSteps = initStruct.params{8};
+            obj.samples = initStruct.params{9};
+            obj.B = initStruct.params{10};
             obj.chiefOrbitDescription = initStruct.initChiefDescription;
             obj.deputyOrbitDescription = initStruct.initDeputyDescription;
             
@@ -107,11 +111,35 @@ classdef GimAlfriendSTM < handle
             end
         end
         
-        function obj = PropagateModel(obj)
+        function obj = propagateModel(obj)
             obj.Phi = PHI_GA_STM(obj.time,obj.J2,obj.ChiefOsc,obj.ChiefElemsNSMean,obj.Req,obj.mu,obj.tol);
+        end
+        
+        function obj = propagateState(obj)
+            obj.propagateModel();
             for ii = 1:length(obj.time)
                 obj.X(:,ii) = obj.Phi(:,:,ii)*obj.initialConditions;
             end
+        end
+        
+        function obj = makeDiscreteMatrices(obj)
+            t = obj.t0:obj.dt:obj.tf;
+            N = length(t);
+            for k = 1:N
+                Tk = linspace(k*obj.dt,(k+1)*obj.dt,obj.samples);
+                PhiJ2k = PHI_GA_STM(Tk,obj.J2,obj.ChiefOsc,obj.ChiefElemsNSMean,obj.Req,obj.mu,obj.tol);
+                phiend = PhiJ2k(:,:,end);
+                obj.Ak(:,:,k) = phiend;
+                for ii = 1:length(Tk)
+                    PhiBk(:,:,ii) = phiend*PhiJ2k(:,:,ii)^(-1)*obj.B;
+                end
+                Bd = zeros(size(obj.B));
+                for ii = 1:length(Tk) - 1
+                    Bd = Bd + 1/2.*(Tk(ii+1)-Tk(ii))*(PhiBk(:,:,ii+1) + PhiBk(:,:,ii));
+                end
+                obj.Bk(:,:,k) = Bd;
+            end
+            
         end
         
         function obj = plotOrbit(obj)
@@ -1183,7 +1211,7 @@ function kepElems = Nonsingular_to_COE(nsElems)
     kepElems(6) = nsElems(2) - kepElems(5);
 end
 
-function [E, f] = keplerSolve(e, M, Tol1);
+function [E, f] = keplerSolve(e, M, Tol1)
 
 % Kepler's Equation
 E = M;
