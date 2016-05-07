@@ -5,7 +5,8 @@ classdef HCW < handle
         initialConditions
         n
         period
-        numInputs
+        
+        samples
         
         t0
         dt
@@ -27,12 +28,13 @@ classdef HCW < handle
             obj.initialConditions = initStruct.params{3};
             obj.n = sqrt(obj.mu/obj.a^3);
             obj.period = 2*pi/obj.n;
-            obj.numInputs = initStruct.params{4};
-            obj.B = inputMatrix(obj.numInputs);
+            obj.samples = initStruct.maneuverParams{1};
+            obj.B = initStruct.maneuverParams{2};
+            obj.A = HCW_Matrix(obj.n);
             
-            obj.t0 = initStruct.timeParams{1};
-            obj.dt = initStruct.timeParams{2};
-            obj.tf = initStruct.timeParams{3};
+            obj.t0 = initStruct.timeParams.t0;
+            obj.dt = initStruct.timeParams.dt;
+            obj.tf = initStruct.timeParams.tf;
             
             obj.makeTimeVector();
         end
@@ -74,22 +76,4 @@ A = [0     0 0     1     0 0;
      3*n^2 0 0     0   2*n 0;
      0     0 0    -2*n   0 0;
      0     0 -n^2  0     0 0];
-end
-
-function B = inputMatrix(numInput)
-
-method = numInput;
-switch method
-    case 0
-        B = zeros(6,1);
-    case 2
-        B = [zeros(4,2); eye(2)];
-    case 3
-        B = [zeros(3,3); eye(3)];
-    case 4
-        B = [zeros(4,4); eye(2), -eye(2)];
-    case 6
-        B = [zeros(3,6); eye(3), -eye(3)];
-end
-
 end

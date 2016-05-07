@@ -1,15 +1,17 @@
-clear; close all; clc; asv;
+clear; close all; asv;
+clc;
 
 Req     = 6378.1363e3; % Radius of Earth (meters)
 mu      = 3.986004415e14; % Gravitational parameter (m^3/s^2)
 J2      = 1082.629e-6; % J2 coefficient
-tol     = 1e-12; % tolerance for transcendental root finding
+% J2 = 0;
+tol     = 1e-13; % tolerance for transcendental root finding
 safetyAltitude = 50e3;
 samples = 3;
 B = [zeros(3,3); eye(3)];
 
 % Valid descriptions are 'Classical'; 'Nonsingular'
-chiefOrbitDescription = 'Nonsingular';
+chiefOrbitDescription = 'Classical';
 % Valid descriptions are 'Cartesian'; 'Relative Classical'; 'Relative Nonsingular'
 deputyOrbitDescription = 'Relative Classical';
 
@@ -21,10 +23,10 @@ method = chiefOrbitDescription;
 switch method
     case 'Classical'
         a = 6678e3;
-        ecc = 0.01;
-        inc = 45*pi/180;
+        ecc = 0.0;
+        inc = 28*pi/180;
         raan = pi/4;
-        w = pi/6;
+        w = 0;
         M0 = 0;
         n = sqrt(mu/a^3);
         Elements = [a ecc inc raan w M0]';
@@ -39,15 +41,15 @@ switch method
          Elements = [a th inc q1 q2 raan]';
          ecc = sqrt(q1^2 + q2^2);         
 end
-
+period = 2*pi/n;
 method = deputyOrbitDescription;
 switch method
     case 'Cartesian'
         eccFactor = -n*(2+ecc)/(sqrt((1+ecc)*(1-ecc)^3));
         x0 = 4000;
-        y0 = 4000;
-        z0 = 1000;
-        xd0 = 0;
+        y0 = -4000;
+        z0 = 10000;
+        xd0 = -1;
         yd0 = eccFactor*x0;
         zd0 = 0;
         RelInitState = [x0 xd0 y0 yd0 z0 zd0]';
@@ -55,7 +57,7 @@ switch method
         da = 0;
         de = 0;
         di = 0.2*pi/180;
-        dO = 0*pi/180;
+        dO = 0.2*pi/180;
         dw = 0;
         dM = 0*pi/180;
         RelInitState = [da de di dO dw dM]';
@@ -69,9 +71,14 @@ switch method
         RelInitState = [da dth di dq1 dq2 dO]';
 end
 
-t0 = 0; numPeriod = 3; numSteps = 100;
+t0 = 0; numPeriod = 3; numSteps = 100; dt = 10;
+tf = numPeriod*period;
 
-initStruct.params = {Req,mu,J2,tol,t0,numPeriod,safetyAltitude,numSteps,samples,B};
+initStruct.params = {Req,mu,J2,tol,safetyAltitude};
+initStruct.maneuverParams = {samples,B};
+initStruct.timeParams.t0 = t0;
+initStruct.timeParams.dt = dt;
+initStruct.timeParams.tf = tf;
 initStruct.initChiefDescription = chiefOrbitDescription;
 initStruct.initDeputyDescription = deputyOrbitDescription;
 initStruct.RelInitState = RelInitState(:);
@@ -80,4 +87,3 @@ initStruct.Elements = Elements(:);
 GA = GimAlfriendSTM(initStruct);
 GA.propagateState();
 GA.plotOrbit();
-GA.makeDiscreteMatrices();

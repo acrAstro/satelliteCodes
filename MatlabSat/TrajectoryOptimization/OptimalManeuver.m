@@ -10,27 +10,26 @@ classdef OptimalManeuver < handle
         tf
         umax
         B
-        model
-        motion
+        motionModel
+        descriptor
     end
     
     methods
-        function obj = OptimalManeuver(params,initStruct)
-            obj.model = params.Model;
-            switch obj.model
-                case 'GA'
-                    obj.motion = GimAlfriendSTM(initStruct)
-                case 'HCW'
-                case 'LERM'
-                case 'SS'
+        function obj = OptimalManeuver(initStruct)
+            obj.descriptor = initStruct.descriptor;
+            obj.motionModel = eval(strcat(obj.descriptor,'(initStruct)'));
+            obj.t0 = initStruct.timeParams.t0;
+            obj.dt = initStruct.timeParams.dt;
+            obj.tf = initStruct.timeParams.tf;
+            if isempty(initStruct.maneuverParams{1})
+                obj.samples = [];
+            else
+                obj.samples = initStruct.maneuverParams{1};
             end
-            obj.samples = params.timeParams(1);
-            obj.t0 = params.timeParams(2);
-            obj.dt = params.timeParams(3);
-            obj.tf = params.timeParams(4);
-            obj.umax = params.inputParams(1);
-            obj.B = params.inputParams(2);
-            
+            obj.B = initStruct.maneuverParams{2};
+            obj.umax = initStruct.maneuverParams{3};
+            obj.motionModel.makeTimeVector();
+            obj.motionModel.makeDiscreteMatrices();
         end
     end
     

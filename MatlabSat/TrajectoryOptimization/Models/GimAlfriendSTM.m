@@ -44,12 +44,12 @@ classdef GimAlfriendSTM < handle
             obj.mu = initStruct.params{2};
             obj.J2 = initStruct.params{3};
             obj.tol = initStruct.params{4};
-            obj.t0 = initStruct.params{5};
-            obj.numPeriod = initStruct.params{6};
-            obj.safetyAltitude = initStruct.params{7};
-            obj.numSteps = initStruct.params{8};
-            obj.samples = initStruct.params{9};
-            obj.B = initStruct.params{10};
+            obj.safetyAltitude = initStruct.params{5};
+            obj.samples = initStruct.maneuverParams{1};
+            obj.B = initStruct.maneuverParams{2};
+            obj.t0 = initStruct.timeParams.t0;
+            obj.dt = initStruct.timeParams.dt;
+            obj.tf = initStruct.timeParams.tf;
             obj.chiefOrbitDescription = initStruct.initChiefDescription;
             obj.deputyOrbitDescription = initStruct.initDeputyDescription;
             
@@ -95,9 +95,8 @@ classdef GimAlfriendSTM < handle
                     else
                     end
                     obj.period = 2*pi/n;
-                    obj.tf = obj.numPeriod*obj.period;
-                    obj.time = linspace(obj.t0,obj.tf,obj.numSteps.*obj.numPeriod);
-                    obj.dt = (obj.tf - obj.t0)/obj.numSteps*obj.numPeriod;
+                    obj.time = obj.t0:obj.dt:obj.tf;
+                    
                 case 'Nonsingular'
                     n = sqrt(obj.mu/obj.ChiefElemsNSMean(1)^3);
                     if isempty(obj.t0)
@@ -105,14 +104,19 @@ classdef GimAlfriendSTM < handle
                     else
                     end
                     obj.period = 2*pi/n;
-                    obj.tf = obj.numPeriod*obj.period;
-                    obj.time = linspace(obj.t0,obj.tf,obj.numSteps.*obj.numPeriod);
-                    obj.dt = (obj.tf - obj.t0)/obj.numSteps*obj.numPeriod;
+                    obj.time = obj.t0:obj.dt:obj.tf;
             end
         end
         
-        function obj = propagateModel(obj)
-            obj.Phi = PHI_GA_STM(obj.time,obj.J2,obj.ChiefOsc,obj.ChiefElemsNSMean,obj.Req,obj.mu,obj.tol);
+        function obj = propagateModel(obj,t1,t2)
+            if nargin < 2
+                t1 = obj.t0;
+            end
+            if nargin < 3
+                t2 = obj.tf;
+            end
+            t = t1:obj.dt:t2;
+            obj.Phi = PHI_GA_STM(t,obj.J2,obj.ChiefOsc,obj.ChiefElemsNSMean,obj.Req,obj.mu,obj.tol);
         end
         
         function obj = propagateState(obj)
@@ -123,7 +127,7 @@ classdef GimAlfriendSTM < handle
         end
         
         function obj = makeDiscreteMatrices(obj)
-            t = obj.t0:obj.dt:obj.tf;
+            t = obj.time;
             N = length(t);
             for k = 1:N
                 Tk = linspace(k*obj.dt,(k+1)*obj.dt,obj.samples);
@@ -139,7 +143,6 @@ classdef GimAlfriendSTM < handle
                 end
                 obj.Bk(:,:,k) = Bd;
             end
-            
         end
         
         function obj = plotOrbit(obj)
