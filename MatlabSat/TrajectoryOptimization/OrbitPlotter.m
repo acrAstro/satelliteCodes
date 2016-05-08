@@ -2,13 +2,25 @@ classdef OrbitPlotter < handle
     
     properties
         States
+        StatesQ
         Controls
+        ControlsQ
+        Points
         Time
         
+        plotLinesStates
+        plotLineStatesMods
+        plotLineStatesSizes
+        
+        plotLinesStatesQ
+        plotLineStatesQMods
+        plotLineStatesQSizes
+        
+        plotLinePoints
+        plotLinePointsMods
+        plotLinePointsSizes
+        
         plotLegends
-        plotLines
-        plotLineMods
-        plotLineSizes
         plotIdentifier
         plotTitle
         plotLabelX
@@ -21,32 +33,66 @@ classdef OrbitPlotter < handle
     
     methods
         function obj = OrbitPlotter(inputStruct)
-            if length(inputStruct.states) ~= length(inputStruct.legends)
-                error('Each state history should have a matching legend!')
-            else
-            end
-            obj.States          = {};
-            obj.Controls        = {};
-            obj.Time            = {};
-            obj.plotLines       = {};
-            obj.plotIdentifier  = {};
-            obj.plotLegends     = {};
-            obj.plotLineMods    = cell(size(inputStruct.lineMods));
-            obj.numInput        = {};
-            for ii = 1:length(inputStruct.states)
+            %             if length(inputStruct.states.states) ~= length(inputStruct.legends)
+            %                 error('Each state history should have a matching legend!')
+            %             else
+            %             end
+            %             obj.States          = {};
+            %             obj.StatesQ         = {};
+            %             obj.Controls        = {};
+            %             obj.ControlsQ       = {};
+            %             obj.Points          = {};
+            %             obj.Time            = {};
+            %             obj.plotLinesStates       = {};
+            %             obj.plotLinesStatesQ = {};
+            %             obj.plotIdentifier  = {};
+            %             obj.plotLegends     = {};
+            %             obj.plotLineStatesMods    = cell(size(inputStruct.lineMods));
+            %             obj.numInput        = {};
+            for ii = 1:length(inputStruct.times)
                 obj.Time{ii}            = inputStruct.times{ii};
-                obj.States{ii}          = inputStruct.states{ii};
-                obj.Controls{ii}        = inputStruct.controls{ii};
-                obj.plotLines{ii}       = inputStruct.lines{ii};
-                obj.plotLegends{ii}     = inputStruct.legends{ii};
-                obj.plotIdentifier{ii}  = inputStruct.id{ii};
-                obj.plotLineMods{ii}    = inputStruct.lineMods{ii};
-                obj.plotLineSizes(ii)   = inputStruct.lineSizes(ii);
-                if ~isempty(inputStruct.controls{ii})
-                    obj.numInput{ii}        = size(inputStruct.controls{ii},1);
-                else obj.numInput{ii} = 0;
-                end
             end
+            for ii = 1:length(inputStruct.states.states)
+                obj.States{ii}          = inputStruct.states.states{ii};
+                obj.plotIdentifier{ii}  = inputStruct.id{ii};
+            end
+            for ii = 1:length(inputStruct.states.statesq)
+                obj.StatesQ{ii}         = inputStruct.states.statesq{ii};
+            end
+            for ii = 1:length(inputStruct.controls.controls)
+                obj.Controls{ii}        = inputStruct.controls.controls{ii};
+            end
+            for ii = 1:length(inputStruct.controls.controlsq)
+                obj.ControlsQ{ii}       = inputStruct.controls.controlsq{ii};
+            end
+            for ii = 1:length(inputStruct.states.points)
+                obj.Points{ii}          = inputStruct.states.points{ii};
+            end
+            for ii = 1:length(inputStruct.lines.linestates)
+                obj.plotLinesStates{ii}         = inputStruct.lines.linestates{ii};
+                obj.plotLineStatesMods{ii}      = inputStruct.lines.linemods{ii};
+                obj.plotLineStatesSizes(ii)     = inputStruct.lines.linesizes(ii);
+            end
+            for ii = 1:length(inputStruct.lines.linestatesq)
+                obj.plotLinesStatesQ{ii}        = inputStruct.lines.linestatesq{ii};
+                obj.plotLineStatesQMods{ii}     = inputStruct.lines.linemodsq{ii};
+                obj.plotLineStatesQSizes(ii)    = inputStruct.lines.linesizesq(ii);
+            end
+            for ii = 1:length(inputStruct.lines.points)
+                obj.plotLinePoints{ii}          = inputStruct.lines.points{ii};
+                obj.plotLinePointsMods{ii}      = inputStruct.lines.pointmods{ii};
+                obj.plotLinePointsSizes(ii)     = inputStruct.lines.pointsizes(ii);
+            end
+            for ii = 1:length(inputStruct.legends)
+                obj.plotLegends{ii}     = inputStruct.legends{ii};
+            end
+            if ~isempty(inputStruct.controls.controls)
+                for ii = 1:length(inputStruct.controls.controls)
+                    obj.numInput{ii}  = size(inputStruct.controls.controls{ii},1);
+                end
+            else obj.numInput{ii} = 0;
+            end
+            
             obj.plotTitle  = inputStruct.title;
             obj.axisBounds = inputStruct.bounds;
             obj.plotLabelX = inputStruct.labels{1};
@@ -60,23 +106,40 @@ classdef OrbitPlotter < handle
             grid on
             for ii = 1:length(obj.States)
                 X = obj.States{ii};
-                U = obj.Controls{ii};
                 if strcmp(obj.plotIdentifier{ii},'GASTM') == 1
-                    plot3(X(1,:),X(3,:),X(5,:),obj.plotLines{ii},obj.plotLineMods{ii},obj.plotLineSizes(ii));
-                elseif strcmp(obj.plotIdentifier{ii},'0') == 1
-                    plot3(X(1),X(2),X(3),obj.plotLines{ii},obj.plotLineMods{ii},obj.plotLineSizes(ii));
-                elseif strcmp(obj.plotIdentifier{ii},'q') == 1
+                    plot3(X(1,:),X(3,:),X(5,:),obj.plotLinesStates{ii},obj.plotLineStatesMods{ii},obj.plotLineStatesSizes(ii));
+                else
+                    plot3(X(1,:),X(2,:),X(3,:),obj.plotLinesStates{ii},obj.plotLineStatesMods{ii},obj.plotLineStatesSizes(ii));
+                end
+            end
+            for ii = 1:length(obj.StatesQ)
+                X = obj.StatesQ{ii};
+                U = obj.ControlsQ{ii};
+                if strcmp(obj.plotIdentifier{ii},'GASTM') == 1
+                    quiver3(X(1,:),X(3,:),X(5,:),obj.plotLinesStatesQ{ii},obj.plotLineStatesQMods{ii},obj.plotLineStatesQSizes(ii));
                     switch obj.numInput{ii}
                         case isempty(obj.numInput{ii})
                             nothing();
                         case 2
-                            quiver3(X(:,1),X(:,2),X(:,3),zeros(size(X(:,1))),U(:,1),U(:,2),obj.plotLines{ii},obj.plotLineMods{ii},obj.plotLineSizes(ii))
+                            quiver3(X(:,1),X(:,3),X(:,5),zeros(size(X(:,1))),U(:,1),U(:,2),obj.plotLinesStatesQ{ii},obj.plotLineStatesQMods{ii},obj.plotLineStatesQSizes(ii));
                         case 3
-                            quiver3(X(:,1),X(:,2),X(:,3),U(:,1),U(:,2),U(:,3),obj.plotLines{ii},obj.plotLineMods{ii},obj.plotLineSizes(ii))
+                            quiver3(X(:,1),X(:,3),X(:,5),U(:,1),U(:,2),U(:,3),obj.plotLinesStatesQ{ii},obj.plotLineStatesQMods{ii},obj.plotLineStatesQSizes(ii));
                     end
                 else
-                    plot3(X(1,:),X(2,:),X(3,:),obj.plotLines{ii},obj.plotLineMods{ii},obj.plotLineSizes(ii));
+                    switch obj.numInput{ii}
+                        case isempty(obj.numInput{ii})
+                            nothing();
+                        case 2
+                            quiver3(X(:,1),X(:,2),X(:,3),zeros(size(X(:,1))),U(:,1),U(:,2),obj.plotLinesStatesQ{ii},obj.plotLineStatesQMods{ii},obj.plotLineStatesQSizes(ii));
+                        case 3
+                            quiver3(X(:,1),X(:,2),X(:,3),U(:,1),U(:,2),U(:,3),obj.plotLinesStatesQ{ii},obj.plotLineStatesQMods{ii},obj.plotLineStatesQSizes(ii));
+                    end
+                    plot3(X(1,:),X(2,:),X(3,:),obj.plotLinesStatesQ{ii},obj.plotLineStatesQMods{ii},obj.plotLineStatesQSizes(ii));
                 end
+            end
+            for ii = 1:length(obj.Points)
+                X = obj.Points{ii};
+                plot3(X(1),X(2),X(3),obj.plotLinePoints{ii},obj.plotLinePointsMods{ii},obj.plotLinePointsSizes(ii));
             end
             legString = cell(length(obj.plotLegends),1);
             for ii = 1:length(obj.plotLegends)
