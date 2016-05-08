@@ -1,11 +1,11 @@
 classdef GimAlfriendSTM < handle
-%% Gim-Alfriend State Transition Matrix Class
-%
-% This class contains the objects necessary to propagate the Gim-Alfriend
-% STM (Gim and Alfriend, 2003). The class accepts chief element
-% descriptions of Classical or Nonsingular, and relative deputy state
-% descriptions of Cartesian, relative classical, or relative nonsingular.
-%
+    %% Gim-Alfriend State Transition Matrix Class
+    %
+    % This class contains the objects necessary to propagate the Gim-Alfriend
+    % STM (Gim and Alfriend, 2003). The class accepts chief element
+    % descriptions of Classical or Nonsingular, and relative deputy state
+    % descriptions of Cartesian, relative classical, or relative nonsingular.
+    %
     properties
         Phi                     % The Gim-Alfriend STM history
         X
@@ -20,9 +20,11 @@ classdef GimAlfriendSTM < handle
         tol                     % Tolerance for Kepler solver
         ChiefElemsNSMean        % Mean, nonsingular description of Chief
         chiefOrbitDescription   % Descriptor flag for chief
-        deputyOrbitDescription  % Descriptor flag for deputy
-        initialConditions       % Deputy initial conditions
-        kepElemsInit            % Initial Kepler Elements of 
+        deputyOrbitDescriptionInit  % Descriptor flag for deputy
+        deputyOrbitDescriptionFinal
+        initialCondition       % Deputy initial conditions
+        terminalCondition
+        kepElemsInit            % Initial Kepler Elements of
         DepElemsInit
         DepElemsInitNS
         DepOsc
@@ -51,8 +53,8 @@ classdef GimAlfriendSTM < handle
             obj.dt = initStruct.timeParams.dt;
             obj.tf = initStruct.timeParams.tf;
             obj.chiefOrbitDescription = initStruct.initChiefDescription;
-            obj.deputyOrbitDescription = initStruct.initDeputyDescription;
-            
+            obj.deputyOrbitDescriptionInit = initStruct.initDeputyDescription;
+            obj.deputyOrbitDescriptionFinal = initStruct.finalDeputyDescription;
             method = obj.chiefOrbitDescription;
             switch method
                 case 'Classical'
@@ -66,21 +68,41 @@ classdef GimAlfriendSTM < handle
                     [~,obj.ChiefOsc] = MeanToOsculatingElements(obj.J2,obj.ChiefElemsNSMean,obj.Req,obj.mu);
             end
             
-            method = obj.deputyOrbitDescription;
+            method = obj.deputyOrbitDescriptionInit;
             switch method
                 case 'Cartesian'
-                    obj.initialConditions = initStruct.RelInitState;
+                    obj.initialCondition = initStruct.RelInitState;
                 case 'Relative Nonsingular'
                     obj.DepElemsInitNS = obj.ChiefElemsNSMean + initStruct.RelInitState;
                     [~,obj.DepOsc] = MeanToOsculatingElements(obj.J2,obj.DepElemsInitNS,obj.Req,obj.mu);
                     deltaElems = obj.DepOsc - obj.ChiefOsc;
-                    obj.initialConditions = SigmaMatrix(obj.J2,obj.ChiefOsc,obj.Req,obj.mu)*deltaElems;
+                    obj.initialCondition = SigmaMatrix(obj.J2,obj.ChiefOsc,obj.Req,obj.mu)*deltaElems;
                 case 'Relative Classical'
                     obj.DepElemsInit = obj.kepElemsInit + initStruct.RelInitState;
                     obj.DepElemsInitNS =  COE_to_Nonsingular(obj.DepElemsInit,obj.tol);
                     [~,obj.DepOsc] = MeanToOsculatingElements(obj.J2,obj.DepElemsInitNS,obj.Req,obj.mu);
                     deltaElems = obj.DepOsc - obj.ChiefOsc;
-                    obj.initialConditions = SigmaMatrix(obj.J2,obj.ChiefOsc,obj.Req,obj.mu)*deltaElems;
+                    obj.initialCondition = SigmaMatrix(obj.J2,obj.ChiefOsc,obj.Req,obj.mu)*deltaElems;
+            end
+            if isempty(initStruct.RelFinalState);
+                obj.terminalCondition = [];
+            else
+                method = obj.deputyOrbitDescriptionInit;
+                switch method
+                    case 'Cartesian'
+                        obj.terminalCondition = initStruct.RelFinalState;
+                    case 'Relative Nonsingular'
+                        obj.DepElemsInitNS = obj.ChiefElemsNSMean + initStruct.RelFinalState;
+                        [~,obj.DepOsc] = MeanToOsculatingElements(obj.J2,obj.DepElemsInitNS,obj.Req,obj.mu);
+                        deltaElems = obj.DepOsc - obj.ChiefOsc;
+                        obj.terminalCondition = SigmaMatrix(obj.J2,obj.ChiefOsc,obj.Req,obj.mu)*deltaElems;
+                    case 'Relative Classical'
+                        obj.DepElemsInit = obj.kepElemsInit + initStruct.RelFinalState;
+                        obj.DepElemsInitNS =  COE_to_Nonsingular(obj.DepElemsInit,obj.tol);
+                        [~,obj.DepOsc] = MeanToOsculatingElements(obj.J2,obj.DepElemsInitNS,obj.Req,obj.mu);
+                        deltaElems = obj.DepOsc - obj.ChiefOsc;
+                        obj.terminalCondition = SigmaMatrix(obj.J2,obj.ChiefOsc,obj.Req,obj.mu)*deltaElems;
+                end
             end
             obj.makeTimeVector();
         end
@@ -122,7 +144,7 @@ classdef GimAlfriendSTM < handle
         function obj = propagateState(obj)
             obj.propagateModel();
             for ii = 1:length(obj.time)
-                obj.X(:,ii) = obj.Phi(:,:,ii)*obj.initialConditions;
+                obj.X(:,ii) = obj.Phi(:,:,ii)*obj.initialCondition;
             end
         end
         
@@ -1206,12 +1228,12 @@ nsElems(6) = kepElems(4);
 end
 
 function kepElems = Nonsingular_to_COE(nsElems)
-    kepElems(1) = nsElems(1);
-    kepElems(2) = sqrt(nsElems(4)^2 + nsElems(5)^2);
-    kepElems(3) = nsElems(3);
-    kepElems(4) = nsElems(6);
-    kepElems(5) = acos(nsElems(4)/kepElems(2));
-    kepElems(6) = nsElems(2) - kepElems(5);
+kepElems(1) = nsElems(1);
+kepElems(2) = sqrt(nsElems(4)^2 + nsElems(5)^2);
+kepElems(3) = nsElems(3);
+kepElems(4) = nsElems(6);
+kepElems(5) = acos(nsElems(4)/kepElems(2));
+kepElems(6) = nsElems(2) - kepElems(5);
 end
 
 function [E, f] = keplerSolve(e, M, Tol1)

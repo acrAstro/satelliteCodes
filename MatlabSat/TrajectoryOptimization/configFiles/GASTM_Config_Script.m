@@ -6,13 +6,18 @@ safetyAltitude = 50e3;
 samples = 3;
 B = [zeros(3,3); eye(3)];
 umax = 0.1;
+umin = 0;
 
 % Valid descriptions are 'Classical'; 'Nonsingular'
 chiefOrbitDescription = 'Classical';
 % Valid descriptions are 'Cartesian'; 'Relative Classical'; 'Relative Nonsingular'
-deputyOrbitDescription = 'Relative Classical';
+deputyOrbitDescriptionInit = 'Cartesian';
+% Valid descriptions are 'Cartesian'; 'Relative Classical'; 'Relative
+% Nonsingular';
+deputyOrbitDescriptionFinal = 'Cartesian';
 
-[chiefOrbitDescription,deputyOrbitDescription] = checkDescriptors(chiefOrbitDescription,deputyOrbitDescription);
+[chiefOrbitDescription,deputyOrbitDescriptionInit,deputyOrbitDescriptionFinal]...
+    = checkDescriptors(chiefOrbitDescription,deputyOrbitDescriptionInit,deputyOrbitDescriptionFinal);
 
 % Note: Classical with Cartesian is the most stable currently
 
@@ -39,14 +44,14 @@ switch method
          ecc = sqrt(q1^2 + q2^2);         
 end
 period = 2*pi/n;
-method = deputyOrbitDescription;
+method = deputyOrbitDescriptionInit;
 switch method
     case 'Cartesian'
         eccFactor = -n*(2+ecc)/(sqrt((1+ecc)*(1-ecc)^3));
-        x0 = 4000;
-        y0 = -4000;
-        z0 = 10000;
-        xd0 = -1;
+        x0 = 100;
+        y0 = 100;
+        z0 = -100;
+        xd0 = 0;
         yd0 = eccFactor*x0;
         zd0 = 0;
         RelInitState = [x0 xd0 y0 yd0 z0 zd0]';
@@ -68,17 +73,48 @@ switch method
         RelInitState = [da dth di dq1 dq2 dO]';
 end
 
-t0 = 0; numPeriod = 3; numSteps = 100; dt = 10;
-tf = numPeriod*period;
+method = deputyOrbitDescriptionFinal;
+switch method
+    case 'Cartesian'
+        eccFactor = -n*(2+ecc)/(sqrt((1+ecc)*(1-ecc)^3));
+        x0 = 0;
+        y0 = 0;
+        z0 = 0;
+        xd0 = 0;
+        yd0 = eccFactor*x0;
+        zd0 = 0;
+        RelFinalState = [x0 xd0 y0 yd0 z0 zd0]';
+    case 'Relative Classical'
+        da = 0;
+        de = 0;
+        di = 0.2*pi/180;
+        dO = 0.2*pi/180;
+        dw = 0;
+        dM = 0*pi/180;
+        RelFinalState = [da de di dO dw dM]';
+    case 'Relative Nonsingular'
+        da = -103.624;
+        dth = -1.104e-3;
+        di = 7.7076e-4;
+        dq1 = 4.262e-5;
+        dq2 = -9.708e-6;
+        dO = 3.227e-3;
+        RelFinalState = [da dth di dq1 dq2 dO]';
+end
+
+t0 = 0; numPeriod = 3; numSteps = 100; dt = 1;
+tf = 300;
 
 initStruct.descriptor = 'GimAlfriendSTM';
 initStruct.params = {Req,mu,J2,tol,safetyAltitude};
-initStruct.maneuverParams = {samples,B,umax};
+initStruct.maneuverParams = {samples,B,umax,umin};
 initStruct.timeParams.t0 = t0;
 initStruct.timeParams.dt = dt;
 initStruct.timeParams.tf = tf;
 initStruct.initChiefDescription = chiefOrbitDescription;
-initStruct.initDeputyDescription = deputyOrbitDescription;
+initStruct.initDeputyDescription = deputyOrbitDescriptionInit;
+initStruct.finalDeputyDescription = deputyOrbitDescriptionFinal;
 initStruct.RelInitState = RelInitState(:);
+initStruct.RelFinalState = RelFinalState(:);
 initStruct.Elements = Elements(:);
 

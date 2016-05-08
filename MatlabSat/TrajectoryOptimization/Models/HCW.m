@@ -2,7 +2,8 @@ classdef HCW < handle
     properties
         mu
         a
-        initialConditions
+        initialCondition
+        terminalCondition
         n
         period
         
@@ -25,7 +26,12 @@ classdef HCW < handle
         function obj = HCW(initStruct)
             obj.mu = initStruct.params{1};
             obj.a = initStruct.params{2};
-            obj.initialConditions = initStruct.params{3};
+            obj.initialCondition = initStruct.params{3};
+            if isempty(initStruct.terminalCondition)
+                obj.terminalCondition = [];
+            else
+                obj.terminalCondition = initStruct.terminalCondition;
+            end
             obj.n = sqrt(obj.mu/obj.a^3);
             obj.period = 2*pi/obj.n;
             obj.samples = initStruct.maneuverParams{1};
@@ -61,9 +67,9 @@ classdef HCW < handle
         function obj = propagateState(obj)
             obj.propagateModel();
             obj.X = zeros(6, length(obj.time));
-            obj.X(:,1) = obj.initialConditions;
+            obj.X(:,1) = obj.initialCondition;
             for ii = 1:length(obj.time)-1
-                obj.X(:,ii+1) = obj.Phi(:,:,ii)*obj.initialConditions;
+                obj.X(:,ii+1) = obj.Phi(:,:,ii)*obj.initialCondition;
             end
         end
     end
