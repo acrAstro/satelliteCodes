@@ -33,22 +33,6 @@ classdef OrbitPlotter < handle
     
     methods
         function obj = OrbitPlotter(inputStruct)
-            %             if length(inputStruct.states.states) ~= length(inputStruct.legends)
-            %                 error('Each state history should have a matching legend!')
-            %             else
-            %             end
-            %             obj.States          = {};
-            %             obj.StatesQ         = {};
-            %             obj.Controls        = {};
-            %             obj.ControlsQ       = {};
-            %             obj.Points          = {};
-            %             obj.Time            = {};
-            %             obj.plotLinesStates       = {};
-            %             obj.plotLinesStatesQ = {};
-            %             obj.plotIdentifier  = {};
-            %             obj.plotLegends     = {};
-            %             obj.plotLineStatesMods    = cell(size(inputStruct.lineMods));
-            %             obj.numInput        = {};
             for ii = 1:length(inputStruct.times)
                 obj.Time{ii}            = inputStruct.times{ii};
             end
@@ -159,7 +143,24 @@ classdef OrbitPlotter < handle
         end
         
         function obj = plotControls(obj)
-            
+            % I've standardized how you plot control signals; if you're
+            % fully actuated, the control plot looks for three signals, if
+            % you're under-actuated, the control plotter looks for only y
+            % and z directions
+            method = obj.numInput;
+            switch method
+                case 2
+                    figure
+                    subplot(212)
+                    hold on
+                    grid on
+                    for ii = 1:length(obj.Controls)
+                        U = obj.Controls{ii};
+                        T = obj.Time{ii};
+                        plot(T,U(1,:),obj.plotLinesStates{ii},obj.plotLineStatesMods{ii},obj.plotLineStatesSizes{ii});
+                    end
+                case 3
+            end
         end
     end
 end
