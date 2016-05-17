@@ -5,10 +5,10 @@ t0 = 0;
 numPeriod = 1;
 period = 2*pi/n;
 dt = 1;
-tf = 300;
+tf = 550;
 numSteps = 100;
-B = [zeros(3,3); eye(3)];
-% B = [zeros(4,2); eye(2)];
+% B = [zeros(3,3); eye(3)];
+B = [zeros(4,2); eye(2)];
 samples = [];
 
 umax = 0.075;

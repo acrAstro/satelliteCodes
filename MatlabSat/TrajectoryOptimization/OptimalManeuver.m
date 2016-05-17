@@ -78,7 +78,7 @@ classdef OptimalManeuver < handle
                 for ii = 1:2*obj.numInput
                     constraints = [constraints, u(ii,kk) <= uslack(ii,kk)];
                     constraints = [constraints, -u(ii,kk) <= uslack(ii,kk)];
-                    constraints = [constraints, obj.umin <= u(ii,kk) <= obj.umax];
+                    constraints = [constraints, 0 <= u(ii,kk) <= obj.umax];
                 end
             end
             constraints = [constraints, x(:,obj.Nsim+1) == obj.Xf];
