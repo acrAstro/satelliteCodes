@@ -32,6 +32,8 @@ classdef MPCTracking_HCW < handle
     controller
     
     baseBody
+    
+    chiefOrbit
     end
     
     methods
@@ -57,6 +59,7 @@ classdef MPCTracking_HCW < handle
             [~,obj.M,~]     = dlqr(obj.A,obj.B,obj.Q,obj.R);
             obj.umax        = initStruct.controlParams.upperBound;
             obj.umin        = initStruct.controlParams.lowerBound;
+            obj.chiefOrbit  = TwoBodyOrbit(chiefStruct);
         end
         
         function obj = buildConvexMPC_OneNorm(obj)

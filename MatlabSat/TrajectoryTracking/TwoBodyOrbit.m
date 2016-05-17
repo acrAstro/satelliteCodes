@@ -28,7 +28,7 @@ classdef TwoBodyOrbit < handle
     
     %% Functionality of class
     methods
-        function TBP = TwoBodyOrbit(initStruct)
+        function obj = TwoBodyOrbit(initStruct)
             % Constructor object
             % initStruct has the following fields:
             % kepElems: 6x1 vector of initial orbital elements
@@ -36,96 +36,98 @@ classdef TwoBodyOrbit < handle
             %           numPeriod,safetyAltitude
             % parameterization: RV or OE parameterization of the orbit
             %
-            TBP.initialKeplerElems = initStruct.kepElems;
-            TBP.J2 = initStruct.params{1};
-            TBP.mu = initStruct.params{2};
-            TBP.Req = initStruct.params{3};
-            TBP.t0 = initStruct.params{4};
-            TBP.numPeriod = initStruct.params{5};
-            TBP.safetyAltitude = initStruct.params{6};
-            TBP.parameterization = initStruct.Parameterization;
+            obj.initialKeplerElems = initStruct.kepElems;
+            obj.J2 = initStruct.params{1};
+            obj.mu = initStruct.params{2};
+            obj.Req = initStruct.params{3};
+            obj.t0 = initStruct.params{4};
+            obj.numPeriod = initStruct.params{5};
+            obj.safetyAltitude = initStruct.params{6};
+            obj.parameterization = initStruct.Parameterization;
+            obj.makeTimeVector();
+            obj.setInitialConditions();
         end
         
-        function TBP = checkParameterization(TBP)
-            method = TBP.parameterization;
+        function obj = checkParameterization(obj)
+            method = obj.parameterization;
             switch method
                 case 'RV'
-                    TBP.setInitialConditions()
+                    obj.setInitialConditions()
                 case 'OE'
-                    TBP.setInitialConditions()
+                    obj.setInitialConditions()
             end
         end
         
-        function TBP = makeTimeVector(TBP)
+        function obj = makeTimeVector(obj)
             % Take constructor and derive time vector
-            n = sqrt(TBP.mu/TBP.initialKeplerElems(1)^3); % Mean motion
-            if isempty(TBP.t0)
-                TBP.t0 = 0;
+            n = sqrt(obj.mu/obj.initialKeplerElems(1)^3); % Mean motion
+            if isempty(obj.t0)
+                obj.t0 = 0;
             else
             end
-            TBP.period = 2*pi/n;                % Orbital period
-            tf = TBP.numPeriod*TBP.period;      % Time of flight
-            TBP.time = linspace(TBP.t0,tf,100*TBP.numPeriod);
+            obj.period = 2*pi/n;                % Orbital period
+            tf = obj.numPeriod*obj.period;      % Time of flight
+            obj.time = linspace(obj.t0,tf,100*obj.numPeriod);
         end
         
-        function TBP = propagateOrbit(TBP)
-            TBP.makeTimeVector(); % Instantiates the time vector
+        function obj = propagateOrbit(obj)
+            obj.makeTimeVector(); % Instantiates the time vector
             % Take constructor and propagate orbit
-            method = TBP.parameterization;
+            method = obj.parameterization;
             options = odeset('RelTol',1e-12,'AbsTol',1e-15); % ode45 options
             switch method
                 case 'RV'
-                    [~,X] = ode45(@orbitEquation,TBP.time,TBP.initialConditions,...
-                        options,TBP.mu,TBP.J2,TBP.Req); % Integrates equations
-                    TBP.RVStates = X';
-                    TBP.getKepElems(); % Derives Kepler elements from R and V
+                    [~,X] = ode45(@orbitEquation,obj.time,obj.initialConditions,...
+                        options,obj.mu,obj.J2,obj.Req); % Integrates equations
+                    obj.RVStates = X';
+                    obj.getKepElems(); % Derives Kepler elements from R and V
                 case 'OE'
-                    [~,X] = ode45(@GaussVariationalEquations,TBP.time,TBP.initialConditions,options,TBP.mu,TBP.Req,TBP.J2);
-                    TBP.OsculatingElements = X';
-                    TBP.getRV();
+                    [~,X] = ode45(@GaussVariationalEquations,obj.time,obj.initialConditions,options,obj.mu,obj.Req,obj.J2);
+                    obj.OsculatingElements = X';
+                    obj.getRV();
             end
         end
         
-        function TBP = setInitialConditions(TBP)
-            method = TBP.parameterization;
+        function obj = setInitialConditions(obj)
+            method = obj.parameterization;
             switch method
                 case 'RV'
                     % Takes Kepler elements and returns R and V for ode45
-                    RV = oe2rv(TBP.initialKeplerElems,TBP.mu,'r');
-                    TBP.initialConditions = RV(:);
-                    TBP.isInsideEarth();
+                    RV = oe2rv(obj.initialKeplerElems,obj.mu,'r');
+                    obj.initialConditions = RV(:);
+                    obj.isInsideEarth();
                 case 'OE'
-                    TBP.initialConditions = TBP.initialKeplerElems;
-                    TBP.isInsideEarth();
+                    obj.initialConditions = obj.initialKeplerElems;
+                    obj.isInsideEarth();
             end
         end
         
-        function TBP = getKepElems(TBP)
+        function obj = getKepElems(obj)
             % Take R and V and return Kepler elements over time
-            oscElems = zeros(6,length(TBP.time));
-            for ii = 1:length(TBP.time)
-                oscElems(:,ii) = rv2oe(TBP.RVStates(:,ii),TBP.mu);
+            oscElems = zeros(6,length(obj.time));
+            for ii = 1:length(obj.time)
+                oscElems(:,ii) = rv2oe(obj.RVStates(:,ii),obj.mu);
             end
-            TBP.OsculatingElements = oscElems;
+            obj.OsculatingElements = oscElems;
         end
         
-        function TBP = getRV(TBP)
-            states = zeros(6,length(TBP.time));
-            for ii = 1:length(TBP.time)
-                states(:,ii) = oe2rv(TBP.OsculatingElements(:,ii),TBP.mu,'r');
+        function obj = getRV(obj)
+            states = zeros(6,length(obj.time));
+            for ii = 1:length(obj.time)
+                states(:,ii) = oe2rv(obj.OsculatingElements(:,ii),obj.mu,'r');
             end
-            TBP.RVStates = states;
+            obj.RVStates = states;
         end
         
-        function TBP = plotOrbit(TBP)
+        function obj = plotOrbit(obj)
             % Plots the orbit in R^3, makes a sphere as well to represent
             % Earth
             [xs,ys,zs] = sphere(30);
-            xs = TBP.Req.*xs; ys = TBP.Req.*ys; zs = TBP.Req.*zs;
+            xs = obj.Req.*xs; ys = obj.Req.*ys; zs = obj.Req.*zs;
             fig = figure;
             hold on
             grid on
-            plot3(TBP.RVStates(1,:),TBP.RVStates(2,:),TBP.RVStates(3,:),'k',...
+            plot3(obj.RVStates(1,:),obj.RVStates(2,:),obj.RVStates(3,:),'k',...
                 'linewidth',2);
             surf(xs,ys,zs);
             title1 = title('$J_2$-Perturbed Orbit');
@@ -135,17 +137,17 @@ classdef TwoBodyOrbit < handle
             leg1 = legend('Orbit','Location','Best');
             axis equal
             set([title1,xl,yl,zl,leg1],'interpreter','latex','fontsize',12);
-            TBP.R3Plot = fig;
+            obj.R3Plot = fig;
         end
         
-        function TBP = plotOrbitalElements(TBP)
-            SMA      = TBP.OsculatingElements(1,:);
-            Ecc      = TBP.OsculatingElements(2,:);
-            Inc      = TBP.OsculatingElements(3,:);
-            Raan     = TBP.OsculatingElements(4,:);
-            argPer   = TBP.OsculatingElements(5,:);
-%             F        = TBP.OsculatingElements(6,:);
-            Time     = 1/TBP.period.*TBP.time;
+        function obj = plotOrbitalElements(obj)
+            SMA      = obj.OsculatingElements(1,:);
+            Ecc      = obj.OsculatingElements(2,:);
+            Inc      = obj.OsculatingElements(3,:);
+            Raan     = obj.OsculatingElements(4,:);
+            argPer   = obj.OsculatingElements(5,:);
+%             F        = obj.OsculatingElements(6,:);
+            Time     = 1/obj.period.*obj.time;
             
             figure
             hold on
@@ -209,22 +211,22 @@ classdef TwoBodyOrbit < handle
             
         end
         
-        function isInsideEarth(TBP)
-            if TBP.Req/1e3 < 10
+        function isInsideEarth(obj)
+            if obj.Req/1e3 < 10
                 % Radius at periapsis
-                rp = TBP.initialKeplerElems(1)*(1 - TBP.initialKeplerElems(2));
-                periapsisAltitude = rp - TBP.Req;
-                safeAltRatio = (TBP.safetyAltitude + TBP.Req)/TBP.Req;
-                rpRatio = (rp)/TBP.Req;
+                rp = obj.initialKeplerElems(1)*(1 - obj.initialKeplerElems(2));
+                periapsisAltitude = rp - obj.Req;
+                safeAltRatio = (obj.safetyAltitude + obj.Req)/obj.Req;
+                rpRatio = (rp)/obj.Req;
                 if rpRatio <= safeAltRatio
                     error(['Orbit periapsis altitude is ' num2str(periapsisAltitude) ' km, check eccentricity and semi-major axis']);
                 else
                 end
-            elseif TBP.Req/1e3 > 10
-                rp = TBP.initialKeplerElems(1)*(1 - TBP.initialKeplerElems(2));
-                periapsisAltitude = rp - TBP.Req;                
-                safeAltRatio = (TBP.safetyAltitude + TBP.Req)/TBP.Req;
-                rpRatio = (rp)/TBP.Req;
+            elseif obj.Req/1e3 > 10
+                rp = obj.initialKeplerElems(1)*(1 - obj.initialKeplerElems(2));
+                periapsisAltitude = rp - obj.Req;                
+                safeAltRatio = (obj.safetyAltitude + obj.Req)/obj.Req;
+                rpRatio = (rp)/obj.Req;
                 if rpRatio <= safeAltRatio
                     error(['Orbit periapsis altitude is ' num2str(periapsisAltitude) ' m, check eccentricity and semi-major axis']);
                 else
