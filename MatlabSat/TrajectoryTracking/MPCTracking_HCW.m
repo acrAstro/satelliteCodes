@@ -37,7 +37,7 @@ classdef MPCTracking_HCW < handle
     end
     
     methods
-        function obj = MPCTracking_HCW(initStruct)
+        function obj = MPCTracking_HCW(initStruct,chiefStruct)
             obj.Ref         = initStruct.refTrajectory;
             obj.URef        = initStruct.refControl;
             obj.TRef        = initStruct.refTrajectoryTime;

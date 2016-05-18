@@ -15,6 +15,8 @@ classdef TwoBodyOrbit < handle
         safetyAltitude      % Altitude below which orbit is 'degraded'
         time                % Derived from Kepler elements and TOF
         t0                  % Initial time
+        dt
+        tf
         period              % Derived from Kepler elements
         numPeriod           % Time of flight
         mu                  % Gravitational parameter of Earth
@@ -40,9 +42,10 @@ classdef TwoBodyOrbit < handle
             obj.J2 = initStruct.params{1};
             obj.mu = initStruct.params{2};
             obj.Req = initStruct.params{3};
-            obj.t0 = initStruct.params{4};
-            obj.numPeriod = initStruct.params{5};
-            obj.safetyAltitude = initStruct.params{6};
+            obj.safetyAltitude = initStruct.params{4};
+            obj.t0 = initStruct.timeParams{1};
+            obj.dt = initStruct.timeParams{2};
+            obj.tf = initStruct.timeParams{3};
             obj.parameterization = initStruct.Parameterization;
             obj.makeTimeVector();
             obj.setInitialConditions();
@@ -66,8 +69,8 @@ classdef TwoBodyOrbit < handle
             else
             end
             obj.period = 2*pi/n;                % Orbital period
-            tf = obj.numPeriod*obj.period;      % Time of flight
-            obj.time = linspace(obj.t0,tf,100*obj.numPeriod);
+            obj.numPeriod = obj.tf/obj.period;
+            obj.time = obj.t0:obj.dt:obj.tf;
         end
         
         function obj = propagateOrbit(obj)
@@ -198,17 +201,6 @@ classdef TwoBodyOrbit < handle
             xl = xlabel('Time, $n$-orbits');
             yl = ylabel('Argument of Perigee, $\omega$, $\deg$');
             set([title1,xl,yl],'interpreter','latex','fontsize',10);
-            
-            %            figure
-            %            hold on
-            %            grid on
-            %            plot(Time, 180/pi.*F,'k','LineWidth',2)
-            %            axis tight
-            %            title1 = title('True Anomaly vs Time');
-            %            xl = xlabel('Time, $n$-orbits');
-            %            yl = ylabel('True Anomaly, $f$, $\deg$');
-            %            set([title1,xl,yl],'interpreter','latex','fontsize',10);
-            
         end
         
         function isInsideEarth(obj)
