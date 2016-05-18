@@ -12,9 +12,9 @@ J2 = 1082.63e-6;
 Req = 6378.137;
 
 % Initial Kepler elements
-a = 7000;
-ecc = 0.01;
-inc = 68.4*pi/180;
+a = 6878;
+ecc = 0.05;
+inc = 50.4*pi/180;
 raan = 45*pi/180;
 argPer = -30*pi/180;
 f0 = 0*pi/180;
@@ -23,7 +23,7 @@ safetyAltitude = 75;
 % Total time of flight
 t0 = 0;
 dt = 1;
-tf = 2*pi/(sqrt(mu/a^3));
+tf = 5*(2*pi/(sqrt(mu/a^3)));
 
 % Initialization structure for orbit class
 chiefStruct.kepElems         = kepElems;
