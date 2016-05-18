@@ -26,13 +26,13 @@ dt = 1;
 tf = 2*pi/(sqrt(mu/a^3));
 
 % Initialization structure for orbit class
-chiefStruct.initStruct.kepElems         = kepElems;
-chiefStruct.initStruct.params           = {J2,mu,Req,safetyAltitude};
-chiefStruct.initStruct.timeParams       = {t0,dt,tf};
-chiefStruct.initStruct.Parameterization = parameterization;
+chiefStruct.kepElems         = kepElems;
+chiefStruct.params           = {J2,mu,Req,safetyAltitude};
+chiefStruct.timeParams       = {t0,dt,tf};
+chiefStruct.Parameterization = parameterization;
 
 % Instantiate TwoBodyOrbit class
-orbit = TwoBodyOrbit(chiefStruct.initStruct);
+orbit = TwoBodyOrbit(chiefStruct);
 % Propagate orbit
 orbit.propagateOrbit();
 % Plot orbit
