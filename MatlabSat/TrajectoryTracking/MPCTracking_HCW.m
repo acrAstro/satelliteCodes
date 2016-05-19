@@ -79,8 +79,8 @@ classdef MPCTracking_HCW < handle
                 constraints = [constraints, 0 <= u(:,kk) <= obj.umax];
             end
             objective = objective + norm(obj.M*e(:,obj.N+1),1);
-            params_in = {x(:,1),[r],[ur]};
-            solutions_out = {[u],objective};
+            params_in = {x(:,1),r,ur};
+            solutions_out = {u,objective};
             obj.controller = optimizer(constraints,objective,options,params_in,solutions_out);
         end
         
@@ -101,8 +101,8 @@ classdef MPCTracking_HCW < handle
                 constraints = [constraints, 0 <= u(:,kk) <= obj.umax];
             end
             objective = objective + transpose(e(:,obj.N+1))*obj.M*e(:,obj.N+1);
-            params_in = {x(:,1),[r],[ur]};
-            solutions_out = {[u],objective};
+            params_in = {x(:,1),r,ur};
+            solutions_out = {u,objective};
             obj.controller = optimizer(constraints,objective,options,params_in,solutions_out);
         end
         
@@ -123,8 +123,8 @@ classdef MPCTracking_HCW < handle
                 constraints = [constraints, obj.umin <= u(:,kk) <= obj.umax];
             end
             objective = objective + norm(obj.M*e(:,obj.N+1),1);
-            params_in = {x(:,1),[r],[ur]};
-            solutions_out = {[u],objective};
+            params_in = {x(:,1),r,ur};
+            solutions_out = {u,objective};
             obj.controller = optimizer(constraints,objective,options,params_in,solutions_out);
         end
         
@@ -145,8 +145,8 @@ classdef MPCTracking_HCW < handle
                 constraints = [constraints, obj.umin <= u(:,kk) <= obj.umax];
             end
             objective = objective + transpose(e(:,obj.N+1))*obj.M*e(:,obj.N+1);
-            params_in = {x(:,1),[r],[ur]};
-            solutions_out = {[u],objective};
+            params_in = {x(:,1),r,ur};
+            solutions_out = {u,objective};
             obj.controller = optimizer(constraints,objective,options,params_in,solutions_out);
         end
         

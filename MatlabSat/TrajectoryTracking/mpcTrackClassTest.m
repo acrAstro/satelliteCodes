@@ -10,10 +10,11 @@ parameterization = 'OE';
 mu = 3.986e5;
 J2 = 1082.63e-6;
 Req = 6378.137;
+mass = 15;
 
 % Initial Kepler elements
 a = 6878;
-ecc = 0.05;
+ecc = 0.01;
 inc = 50.4*pi/180;
 raan = 45*pi/180;
 argPer = -30*pi/180;
@@ -23,11 +24,11 @@ safetyAltitude = 75;
 % Total time of flight
 t0 = 0;
 dt = 1;
-tf = 5*(2*pi/(sqrt(mu/a^3)));
+tf = 800;
 
 % Initialization structure for orbit class
 chiefStruct.kepElems         = kepElems;
-chiefStruct.params           = {J2,mu,Req,safetyAltitude};
+chiefStruct.params           = {J2,mu,Req,safetyAltitude,mass};
 chiefStruct.timeParams       = {t0,dt,tf};
 chiefStruct.Parameterization = parameterization;
 
