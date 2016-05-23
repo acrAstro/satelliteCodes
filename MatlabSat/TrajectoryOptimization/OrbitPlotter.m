@@ -77,7 +77,6 @@ classdef OrbitPlotter < handle
             else
                 obj.spaceshuttle = [];
             end
-            obj.plot3DOrbit();
         end
         
         function obj = plot3DOrbit(obj)
