@@ -43,7 +43,6 @@ classdef TwoBodyOrbit < handle
             obj.mu = initStruct.params{2};
             obj.Req = initStruct.params{3};
             obj.safetyAltitude = initStruct.params{4};
-            obj.mass = initStruct.params{5};
             obj.t0 = initStruct.timeParams{1};
             obj.dt = initStruct.timeParams{2};
             obj.tf = initStruct.timeParams{3};
@@ -74,30 +73,19 @@ classdef TwoBodyOrbit < handle
             obj.time = obj.t0:obj.dt:obj.tf;
         end
         
-        function obj = propagateOrbit(obj,propSpan,x0,u)
-            if nargin < 2 || isempty(propSpan)
-                propSpan = obj.time;
-            else
-            end
-            if nargin < 3 || isempty(x0)
-                x0 = obj.initialConditions;
-            else
-            end
-            if nargin < 4 || isempty(u)
-                u = [];
-            else
-            end
+        function obj = propagateOrbit(obj)
+            obj.makeTimeVector(); % Instantiates the time vector
             % Take constructor and propagate orbit
             method = obj.parameterization;
             options = odeset('RelTol',1e-12,'AbsTol',1e-15); % ode45 options
             switch method
                 case 'RV'
-                    [~,X] = ode45(@orbitEquation,propSpan,x0,...
-                        options,obj.mu,obj.J2,obj.Req,obj.mass,u); % Integrates equations
+                    [~,X] = ode45(@orbitEquation,obj.time,obj.initialConditions,...
+                        options,obj.mu,obj.J2,obj.Req); % Integrates equations
                     obj.RVStates = X';
                     obj.getKepElems(); % Derives Kepler elements from R and V
                 case 'OE'
-                    [~,X] = ode45(@GaussVariationalEquations,propSpan,x0,options,obj.mu,obj.Req,obj.J2,obj.mass,u);
+                    [~,X] = ode45(@GaussVariationalEquations,obj.time,obj.initialConditions,options,obj.mu,obj.Req,obj.J2);
                     obj.OsculatingElements = X';
                     obj.getRV();
             end
@@ -244,7 +232,7 @@ end
 
 
 %% Daughter functions
-function DX = orbitEquation(t,x,mu,J2,Req,mass,u)
+function DX = orbitEquation(t,x,mu,J2,Req)
 % Main function to integrate the orbital equation of motion with the
 % influence of J2
 % Author: Andrew Rogers, Ph.D.
@@ -264,7 +252,7 @@ vdot = -mu/R^3.*r + aj2;
 DX = [rdot(:); vdot(:)];
 end
 
-function DX = GaussVariationalEquations(t,X,mu,Req,J2,mass,u)
+function DX = GaussVariationalEquations(t,X,mu,Req,J2)
 
 % This function contains the necessary procedures for computing Gauss'
 % Variation of Parameters. Equations derived from Battin (1987), Schaub and
