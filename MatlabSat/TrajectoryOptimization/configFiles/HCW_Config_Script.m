@@ -5,7 +5,7 @@ t0 = 0;
 numPeriod = 1;
 period = 2*pi/n;
 dt = 1;
-tf = 550;
+tf = 600;
 numSteps = 100;
 % B = [zeros(3,3); eye(3)];
 B = [zeros(4,2); eye(2)];
@@ -18,7 +18,7 @@ eccFactor = -2*n;
 
 x0 = 100;
 y0 = 100;
-z0 = -100;
+z0 = -1000;
 vx0 = 0;
 vy0 = eccFactor*x0;
 vz0 = 0;
