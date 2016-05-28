@@ -2,7 +2,7 @@ clear; close all; clc; asv;
 
 mu = 3.986e14;
 a = 7000e3; n = sqrt(mu/a^3);
-nu = 2;
+nu = 4;
 mass = 1;
 Lb = -0.03;
 Ub = 0.03;

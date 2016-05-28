@@ -1,4 +1,4 @@
-classdef GimAlfriendSTM < handle
+classdef GimAlfriendSTM < FormationFlying
 %% Gim-Alfriend State Transition Matrix Class
 %
 % This class contains the objects necessary to propagate the Gim-Alfriend
@@ -30,83 +30,84 @@ classdef GimAlfriendSTM < handle
     end
     
     methods
-        function GA = GimAlfriendSTM(initStruct)
-            GA.Req = initStruct.params{1};
-            GA.mu = initStruct.params{2};
-            GA.J2 = initStruct.params{3};
-            GA.tol = initStruct.params{4};
-            GA.t0 = initStruct.params{5};
-            GA.numPeriod = initStruct.params{6};
-            GA.safetyAltitude = initStruct.params{7};
-            GA.chiefOrbitDescription = initStruct.initChiefDescription;
-            GA.deputyOrbitDescription = initStruct.initDeputyDescription;
+        function obj = GimAlfriendSTM(initStruct)
+            obj@FormationFlying(initStruct.params{5},initStruct.params{6},initStruct.params{2});
+            obj.Req = initStruct.params{1};
+%             obj.mu = initStruct.params{2};
+            obj.J2 = initStruct.params{3};
+            obj.tol = initStruct.params{4};
+%             obj.t0 = initStruct.params{5};
+%             obj.numPeriod = initStruct.params{6};
+            obj.safetyAltitude = initStruct.params{7};
+            obj.chiefOrbitDescription = initStruct.initChiefDescription;
+            obj.deputyOrbitDescription = initStruct.initDeputyDescription;
             
-            method = GA.chiefOrbitDescription;
+            method = obj.chiefOrbitDescription;
             switch method
                 case 'Classical'
-                    GA.kepElemsInit = initStruct.Elements;
-                    GA.ChiefElemsNSMean = COE_to_Nonsingular(GA.kepElemsInit,GA.tol);
-                    GA.ChiefElemsNSMean = GA.ChiefElemsNSMean(:);
-                    [~,GA.ChiefOsc] = MeanToOsculatingElements(GA.J2,GA.ChiefElemsNSMean,GA.Req,GA.mu);
+                    obj.kepElemsInit = initStruct.Elements;
+                    obj.ChiefElemsNSMean = COE_to_Nonsingular(obj.kepElemsInit,obj.tol);
+                    obj.ChiefElemsNSMean = obj.ChiefElemsNSMean(:);
+                    [~,obj.ChiefOsc] = MeanToOsculatingElements(obj.J2,obj.ChiefElemsNSMean,obj.Req,obj.mu);
                 case 'Nonsingular'
-                    GA.ChiefElemsNSMean = initStruct.Elements;
-                    GA.kepElemsInit = Nonsingular_to_COE(GA.ChiefElemsNSMean);
-                    [~,GA.ChiefOsc] = MeanToOsculatingElements(GA.J2,GA.ChiefElemsNSMean,GA.Req,GA.mu);
+                    obj.ChiefElemsNSMean = initStruct.Elements;
+                    obj.kepElemsInit = Nonsingular_to_COE(obj.ChiefElemsNSMean);
+                    [~,obj.ChiefOsc] = MeanToOsculatingElements(obj.J2,obj.ChiefElemsNSMean,obj.Req,obj.mu);
             end
             
-            method = GA.deputyOrbitDescription;
+            method = obj.deputyOrbitDescription;
             switch method
                 case 'Cartesian'
-                    GA.initialConditions = initStruct.RelInitState;
+                    obj.initialConditions = initStruct.RelInitState;
                 case 'Relative Nonsingular'
-                    GA.DepElemsInitNS = GA.ChiefElemsNSMean + initStruct.RelInitState;
-                    [~,GA.DepOsc] = MeanToOsculatingElements(GA.J2,GA.DepElemsInitNS,GA.Req,GA.mu);
-                    deltaElems = GA.DepOsc - GA.ChiefOsc;
-                    GA.initialConditions = SigmaMatrix(GA.J2,GA.ChiefOsc,GA.Req,GA.mu)*deltaElems;
+                    obj.DepElemsInitNS = obj.ChiefElemsNSMean + initStruct.RelInitState;
+                    [~,obj.DepOsc] = MeanToOsculatingElements(obj.J2,obj.DepElemsInitNS,obj.Req,obj.mu);
+                    deltaElems = obj.DepOsc - obj.ChiefOsc;
+                    obj.initialConditions = SigmaMatrix(obj.J2,obj.ChiefOsc,obj.Req,obj.mu)*deltaElems;
                 case 'Relative Classical'
-                    GA.DepElemsInit = GA.kepElemsInit + initStruct.RelInitState;
-                    GA.DepElemsInitNS =  COE_to_Nonsingular(GA.DepElemsInit,GA.tol);
-                    [~,GA.DepOsc] = MeanToOsculatingElements(GA.J2,GA.DepElemsInitNS,GA.Req,GA.mu);
-                    deltaElems = GA.DepOsc - GA.ChiefOsc;
-                    GA.initialConditions = SigmaMatrix(GA.J2,GA.ChiefOsc,GA.Req,GA.mu)*deltaElems;
+                    obj.DepElemsInit = obj.kepElemsInit + initStruct.RelInitState;
+                    obj.DepElemsInitNS =  COE_to_Nonsingular(obj.DepElemsInit,obj.tol);
+                    [~,obj.DepOsc] = MeanToOsculatingElements(obj.J2,obj.DepElemsInitNS,obj.Req,obj.mu);
+                    deltaElems = obj.DepOsc - obj.ChiefOsc;
+                    obj.initialConditions = SigmaMatrix(obj.J2,obj.ChiefOsc,obj.Req,obj.mu)*deltaElems;
             end
         end
         
-        function GA = makeTimeVector(GA)
-            method = GA.chiefOrbitDescription;
+        function obj = makeTimeVector(obj)
+            method = obj.chiefOrbitDescription;
             switch method
                 case 'Classical'
-                    n = sqrt(GA.mu/GA.kepElemsInit(1)^3);
-                    if isempty(GA.t0)
-                        GA.t0 = 0;
+                    n = sqrt(obj.mu/obj.kepElemsInit(1)^3);
+                    if isempty(obj.t0)
+                        obj.t0 = 0;
                     else
                     end
-                    GA.period = 2*pi/n;
-                    tf = GA.numPeriod*GA.period;
-                    GA.time = linspace(GA.t0,tf,100.*GA.numPeriod);
+                    obj.period = 2*pi/n;
+                    tf = obj.numPeriod*obj.period;
+                    obj.time = linspace(obj.t0,tf,100.*obj.numPeriod);
                 case 'Nonsingular'
-                    n = sqrt(GA.mu/GA.ChiefElemsNSMean(1)^3);
-                    if isempty(GA.t0)
-                        GA.t0 = 0;
+                    n = sqrt(obj.mu/obj.ChiefElemsNSMean(1)^3);
+                    if isempty(obj.t0)
+                        obj.t0 = 0;
                     else
                     end
-                    GA.period = 2*pi/n;
-                    tf = GA.numPeriod*GA.period;
-                    GA.time = linspace(GA.t0,tf,100.*GA.numPeriod);
+                    obj.period = 2*pi/n;
+                    tf = obj.numPeriod*obj.period;
+                    obj.time = linspace(obj.t0,tf,100.*obj.numPeriod);
             end
         end
         
-        function GA = PropagateGASTM(GA)
-            GA.Phi = PHI_GA_STM(GA.time,GA.J2,GA.ChiefOsc,GA.ChiefElemsNSMean,GA.Req,GA.mu,GA.tol);
-            for ii = 1:length(GA.time)
-                GA.X(:,ii) = GA.Phi(:,:,ii)*GA.initialConditions;
+        function obj = PropagateGASTM(obj)
+            obj.Phi = PHI_GA_STM(obj.time,obj.J2,obj.ChiefOsc,obj.ChiefElemsNSMean,obj.Req,obj.mu,obj.tol);
+            for ii = 1:length(obj.time)
+                obj.X(:,ii) = obj.Phi(:,:,ii)*obj.initialConditions;
             end
         end
         
-        function GA = plotGAOrbit(GA)
-            x = 1e-3.*GA.X(1,:);
-            y = 1e-3.*GA.X(3,:);
-            z = 1e-3.*GA.X(5,:);
+        function obj = plotGAOrbit(obj)
+            x = 1e-3.*obj.X(1,:);
+            y = 1e-3.*obj.X(3,:);
+            z = 1e-3.*obj.X(5,:);
             
             figure
             hold on
