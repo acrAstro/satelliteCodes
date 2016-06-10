@@ -30,7 +30,7 @@ function makeACADOProject()
 
     cp $baseCmakeFile $cmakeFile
     
-	## Experimental
+	## Experimental, MUST USE PYTHON3
 	pyFile="modifyCMakeFile.py"
 	cp $pyFile $projectDirectory
 	newPyFile=$projectDirectory$pyFile
